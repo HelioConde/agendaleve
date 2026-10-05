@@ -220,6 +220,20 @@ function refreshAvailability() {
   document.querySelector('#booking-hours').textContent = `${config.opensAt}–${config.closesAt}`;
 }
 
+function showBookingConfirmation(booking) {
+  const dateLabel = new Date(`${booking.date}T12:00:00`).toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+  const summary = `${booking.service} · ${dateLabel}, às ${booking.time} · ${booking.client}`;
+  const message = `Olá, ${booking.client}! Sua reserva de ${booking.service} está confirmada para ${dateLabel}, às ${booking.time}. Até lá!`;
+  document.querySelector('#confirmationSummary').textContent = summary;
+  document.querySelector('#confirmationMessage').textContent = message;
+  document.querySelector('#whatsappConfirmation').href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+  document.querySelector('#bookingFormLayout').hidden = true;
+  document.querySelector('#bookingConfirmation').hidden = false;
+  document.querySelector('#bookingConfirmation h2').focus();
+}
+
 document.querySelectorAll('[data-view]').forEach(button => {
   button.addEventListener('click', () => switchView(button.dataset.view));
 });
@@ -322,14 +336,33 @@ bookingForm.addEventListener('submit', event => {
     time: values.time
   });
   writeBookings(bookings);
+  showBookingConfirmation(bookings.at(-1));
   bookingForm.reset();
   bookingDate.min = localDateString(new Date());
   bookingDate.value = '';
   renderServiceOptions();
   refreshAvailability();
   renderDashboard();
-  showToast('Reserva de demonstração confirmada.');
-  switchView('agenda');
+});
+
+document.querySelector('#copyConfirmation').addEventListener('click', async () => {
+  const message = document.querySelector('#confirmationMessage').textContent;
+  try {
+    await navigator.clipboard.writeText(message);
+    showToast('Mensagem de confirmação copiada.');
+  } catch {
+    showToast('Não foi possível copiar. Selecione e copie a mensagem.');
+  }
+});
+
+document.querySelector('#newBooking').addEventListener('click', () => {
+  bookingForm.reset();
+  bookingDate.min = localDateString(new Date());
+  bookingDate.value = '';
+  renderServiceOptions();
+  refreshAvailability();
+  document.querySelector('#bookingConfirmation').hidden = true;
+  document.querySelector('#bookingFormLayout').hidden = false;
 });
 
 bookingList.addEventListener('click', event => {

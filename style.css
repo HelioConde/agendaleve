@@ -118,11 +118,24 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .toast { position: fixed; z-index: 4; left: 50%; bottom: 22px; max-width: calc(100vw - 30px); padding: 11px 16px; transform: translateX(-50%); border-radius: 30px; background: #202923; color: white; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
 .toast.on { opacity: 1; }
 
+.booking-confirmation { max-width: 600px; margin: 0 auto; padding: 30px; text-align: center; }
+.confirmation-check { width: 42px; height: 42px; margin: 0 auto 15px; display: grid; place-items: center; border-radius: 50%; background: var(--soft); color: var(--accent); font-size: 22px; font-weight: 700; }
+.booking-confirmation .eyebrow { margin-bottom: 6px; }
+.booking-confirmation h2 { margin: 0; font: 750 24px Manrope, sans-serif; letter-spacing: -.7px; }
+.confirmation-summary { margin: 8px 0 20px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.confirmation-message { padding: 15px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfa; text-align: left; }
+.confirmation-message strong { font-size: 12px; }
+.confirmation-message p { color: #59635b; font-size: 12px; line-height: 1.6; }
+.confirmation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.confirmation-actions .secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; color: var(--accent-dark); text-decoration: none; font-size: 11px; }
+.booking-confirmation > .text-button { margin-top: 13px; }
+
 @media (max-width: 760px) {
   .intro { grid-template-columns: 1fr; padding-top: 42px; gap: 20px; }
   .intro-card { min-height: 120px; }
   .booking-layout, .settings-grid { grid-template-columns: 1fr; }
   .booking-panel { max-width: none; }
+  .booking-confirmation { padding: 24px 18px; }
   .plans-top { align-items: flex-start; flex-direction: column; gap: 8px; }
 }
 @media (max-width: 520px) {

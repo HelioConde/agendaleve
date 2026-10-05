@@ -52,7 +52,7 @@
 
       <section class="view" id="view-reservas" hidden>
         <div class="view-heading"><div><p class="eyebrow">PÁGINA DO CLIENTE · DEMONSTRAÇÃO</p><h2>Escolha seu atendimento</h2></div></div>
-        <div class="booking-layout">
+        <div class="booking-layout" id="bookingFormLayout">
           <section class="panel booking-panel">
             <p class="business-label">Reservas para</p>
             <h3 id="booking-business-name">Meu negócio</h3>
@@ -73,6 +73,21 @@
             <div class="hours-chip"><span>Expediente</span><strong id="booking-hours">—</strong></div>
           </aside>
         </div>
+        <section class="booking-confirmation panel" id="bookingConfirmation" hidden aria-live="polite">
+          <span class="confirmation-check" aria-hidden="true">✓</span>
+          <p class="eyebrow">RESERVA CONFIRMADA · DEMONSTRAÇÃO</p>
+          <h2 tabindex="-1">Seu horário está reservado!</h2>
+          <p id="confirmationSummary" class="confirmation-summary"></p>
+          <div class="confirmation-message">
+            <strong>Mensagem pronta para enviar</strong>
+            <p id="confirmationMessage"></p>
+            <div class="confirmation-actions">
+              <button class="secondary" id="copyConfirmation" type="button">Copiar mensagem</button>
+              <a class="secondary whatsapp-link" id="whatsappConfirmation" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a>
+            </div>
+          </div>
+          <button class="text-button" id="newBooking" type="button">Fazer outro agendamento →</button>
+        </section>
       </section>
 
       <section class="view" id="view-configuracao" hidden>
