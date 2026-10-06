@@ -638,3 +638,14 @@ html[lang="en"] .tabs .tab{white-space:normal}
 .booking-customer-view #view-reservas .booking-aside{border-color:color-mix(in srgb,var(--business-accent) 24%,#dce8de);background:color-mix(in srgb,var(--business-accent) 8%,#fff)}
 .public-booking-mode .public-mode-banner{border-left:4px solid var(--business-accent)}
 .booking-customer-view .booking-confirmation .confirmation-check{background:color-mix(in srgb,var(--business-accent) 12%,#fff);color:var(--business-accent)}
+
+.time-off-panel{align-self:start}
+.time-off-form{margin-top:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.time-off-form .field{margin-top:10px}
+.time-off-list{display:grid;gap:8px;margin-top:12px}
+.time-off-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfa}
+.time-off-item strong,.time-off-item span{display:block}
+.time-off-item strong{font-size:12px}
+.time-off-item span{margin-top:3px;color:var(--muted);font-size:10px}
+.time-off-empty{padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:11px;text-align:center}
+@media(max-width:520px){.time-off-item{align-items:flex-start;flex-direction:column}.time-off-item .text-button{padding-left:0}}
