@@ -56,3 +56,6 @@ jobs:
           grep -qi 'booking-summary-service' index.html
           grep -qi 'updateBookingSummary' app.js
           grep -qi 'ownerDashboard' app.js
+          grep -qi '2026-10 visual system refresh' style.css
+          grep -qi -- '--accent: #1f6a4a' style.css
+          grep -qi -- '--sand: #f1ece2' style.css
