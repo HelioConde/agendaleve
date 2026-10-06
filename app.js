@@ -73,6 +73,7 @@ let activeConfig = readLocalConfig();
 let activeBookings = readLocalBookings();
 let availableSlotMap = new Map();
 let managedBooking = null;
+let lastConfirmedBooking = null;
 let editingServiceId = null;
 let cloudLoading = false;
 let turnstileToken = '';
@@ -979,6 +980,64 @@ async function refreshAvailability() {
   updateBookingSummary();
 }
 
+function icsEscape(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function icsFloatingDateTime(date) {
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}${month}${day}T${hours}${minutes}00`;
+}
+
+function bookingCalendarContent(booking) {
+  const start = new Date(`${booking.date}T${booking.time}:00`);
+  const end = new Date(start.getTime() + Number(booking.duration || 30) * 60000);
+  const businessName = currentConfig().businessName || 'AgendaLeve';
+  const description = currentLocale() === 'en'
+    ? `Booking with ${businessName}. Service: ${booking.service}.`
+    : `Reserva com ${businessName}. Serviço: ${booking.service}.`;
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//AgendaLeve//Booking//PT-BR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:' + icsEscape((booking.id || crypto.randomUUID?.() || String(Date.now())) + '@agendaleve'),
+    'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z'),
+    'DTSTART:' + icsFloatingDateTime(start),
+    'DTEND:' + icsFloatingDateTime(end),
+    'SUMMARY:' + icsEscape(booking.service + ' — ' + businessName),
+    'DESCRIPTION:' + icsEscape(description),
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR',
+    ''
+  ].join('\r\n');
+}
+
+function downloadBookingCalendar(booking) {
+  if (!booking) return;
+  const blob = new Blob([bookingCalendarContent(booking)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `agendaleve-${booking.date}-${String(booking.time || '').replace(':', '')}.ics`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast('Evento de calendário baixado.');
+}
+
 function bookingManagementUrl(booking) {
   if (!publicSlug || !booking?.id || !booking?.cancelToken) return '';
   const url = new URL(location.href);
@@ -991,6 +1050,7 @@ function bookingManagementUrl(booking) {
 }
 
 function showBookingConfirmation(booking) {
+  lastConfirmedBooking = booking;
   const dateLabel = new Date(`${booking.date}T12:00:00`).toLocaleDateString(currentLocale(), {
     weekday: 'long', day: 'numeric', month: 'long'
   });
@@ -1879,6 +1939,10 @@ document.querySelector('#confirmCustomerCancellation').addEventListener('click',
   }
 });
 
+document.querySelector('#download-calendar')?.addEventListener('click', () => {
+  downloadBookingCalendar(lastConfirmedBooking);
+});
+
 document.querySelector('#copyConfirmation').addEventListener('click', async () => {
   const message = document.querySelector('#confirmationMessage').textContent;
   try {
@@ -1890,6 +1954,7 @@ document.querySelector('#copyConfirmation').addEventListener('click', async () =
 });
 
 document.querySelector('#newBooking').addEventListener('click', () => {
+  lastConfirmedBooking = null;
   bookingForm.reset();
   bookingDate.min = localDateString(new Date());
   bookingDate.value = '';
