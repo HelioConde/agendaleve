@@ -108,6 +108,10 @@ jobs:
           grep -qi 'beta-summary' app.js
           grep -qi 'push-test' app.js
           grep -qi 'agendaleve-shell-v2' sw.js
+          grep -qi 'i18n.js' sw.js
+          grep -qi 'agendaleve_language' app.js
+          grep -qi 'agendaleve_language' supabase/functions/reminder-dispatch/index.ts
+          grep -qi 'agendaleve_language' supabase/functions/push-test/index.ts
           grep -qi 'ads-section' index.html
           grep -qi 'data-ad-placement="owner-footer"' index.html
           grep -qi 'data-ad-placement="public-footer"' index.html
