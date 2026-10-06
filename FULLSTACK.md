@@ -16,5 +16,18 @@ The module already uses RLS and booking-specific database constraints.
 ## Production path
 The current UI is connected to Supabase Auth and the existing schema. Public booking creation remains server-validated, owner data is isolated by RLS, each reservation can store a private WhatsApp/phone contact, the owner dashboard supports period/status filters plus confirm/complete/cancel actions, and public bookings receive a cryptographically random management token whose hash is stored server-side. Customers can use that private link to inspect a sanitized reservation, query availability excluding their current booking, reschedule transactionally or cancel without creating an account. Next production steps are reminder jobs, external abuse protection (CAPTCHA/Turnstile) and broader real-world QA.
 
+## Internacionalização
+
+O produto usa uma camada de i18n no frontend com:
+
+- PT-BR como locale padrão e fallback;
+- inglês como segundo idioma obrigatório;
+- seletor PT/EN acessível;
+- preferência persistida em `localStorage`;
+- tradução também de conteúdo dinâmico gerado pelo JavaScript;
+- formatação localizada de datas, números e moeda;
+- atualização de `lang`, title, description e Open Graph conforme o idioma ativo;
+- preservação do texto original em PT-BR ao alternar entre os idiomas.
+
 ## QA gates
 Double-booking, timezone handling, overlapping services, cancellation rules, rate limiting, mobile booking flow and cross-account isolation are release blockers.
