@@ -49,7 +49,7 @@ const accountProfile = document.querySelector('#account-profile');
 const accountMessage = document.querySelector('#account-message');
 const syncStatus = document.querySelector('#sync-status');
 const introSection = document.querySelector('#intro-section');
-const plansSection = document.querySelector('#plans-section');
+const adsSection = document.querySelector('#ads-section');
 const bookingSummaryService = document.querySelector('#booking-summary-service');
 const bookingSummaryDuration = document.querySelector('#booking-summary-duration');
 const bookingSummaryPrice = document.querySelector('#booking-summary-price');
@@ -571,7 +571,7 @@ function switchView(name) {
 
   const ownerDashboard = name === 'agenda' && !publicMode;
   if (introSection) introSection.hidden = !ownerDashboard;
-  if (plansSection) plansSection.hidden = !ownerDashboard;
+  if (adsSection) adsSection.hidden = !ownerDashboard;
 
   if (name === 'reservas') {
     updateBookingSummary();
@@ -2033,7 +2033,7 @@ async function initialize() {
     document.querySelector('#view-agenda').hidden = true;
     document.querySelector('#view-configuracao').hidden = true;
     introSection.hidden = true;
-    plansSection.hidden = true;
+    adsSection.hidden = true;
     document.querySelector('#public-mode-banner').hidden = false;
     document.querySelector('#view-reservas').hidden = false;
     if (customerCancelMode) {
