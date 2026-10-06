@@ -9,7 +9,7 @@ O AgendaLeve usa o projeto compartilhado `pizzaria-db`. Todos os objetos do prod
 - As policies de proprietário e leitura pública estão definidas; grants de acesso via Data API para `anon` e `authenticated` continuam revogados até a integração do frontend ser revisada.
 - A Edge Function `create-booking` está publicada e ativa. Ela verifica os dados e a origem, limita o tamanho do pedido e as tentativas, e chama funções do banco usando uma chave de serviço mantida no ambiente Supabase.
 - O banco valida o expediente, a duração e os conflitos. Uma restrição impede reservas ativas sobrepostas, inclusive em pedidos simultâneos.
-- A interface ainda é uma demonstração local: não há cadastro/login, negócios ou serviços geridos pelo painel, catálogo público ou sincronização conectados ao banco.
+- A interface está conectada ao Supabase Auth e ao backend: proprietário gerencia negócio, expediente, serviços e reservas; visitantes usam o link público; o contato telefônico/WhatsApp da reserva fica privado para o estabelecimento.
 
 ## Segurança
 
@@ -20,10 +20,10 @@ O AgendaLeve usa o projeto compartilhado `pizzaria-db`. Todos os objetos do prod
 
 ## Próximas etapas
 
-1. Implementar cadastro e login com Supabase Auth.
-2. Conectar o painel autenticado para criar negócios, expediente, serviços e consultar/cancelar reservas com RLS.
-3. Criar a leitura pública mínima de catálogo e disponibilidade sem expor dados de clientes.
-4. Ligar o formulário público à função `create-booking`.
-5. Testar isolamento entre proprietários, permissões, reserva concorrente e comportamento do formulário antes de divulgar o serviço.
+1. Adicionar CAPTCHA/Turnstile antes de divulgação ampla.
+2. Criar cancelamento/reagendamento pelo cliente com token seguro.
+3. Adicionar lembretes automáticos.
+4. Ampliar QA real com múltiplos proprietários e reservas concorrentes.
+5. Evoluir o painel com filtros por dia/status e ações rápidas.
 
-Mensagens automáticas, pagamentos e cancelamento pelo cliente ainda não estão implementados.
+Pagamentos e automações de mensagem ainda não estão implementados.
