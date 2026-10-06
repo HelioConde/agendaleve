@@ -22,6 +22,8 @@
   }
   </script>
   <title>AgendaLeve — Agendamentos simples para seu negócio</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -285,7 +287,9 @@
             </div>
             <div class="notification-actions">
               <button class="primary compact" id="push-toggle" type="button">Ativar notificações</button>
+              <button class="secondary compact" id="push-test" type="button" disabled>Enviar teste</button>
               <button class="secondary compact" id="save-reminders" type="button">Salvar lembretes</button>
+              <button class="secondary compact" id="install-app" type="button" hidden>Instalar app</button>
             </div>
             <p class="notification-status" id="push-status" role="status">Entre na sua conta para ativar o push.</p>
           </section>
@@ -294,6 +298,12 @@
             <div class="panel-heading inline-panel-heading">
               <div><h3>Programa beta</h3><p>Validação com uso real, sem coletar dados do cliente.</p></div>
               <span class="feature-badge neutral">Feedback</span>
+            </div>
+            <div class="beta-metrics" id="beta-metrics" aria-label="Métricas do beta nos últimos 30 dias">
+              <article><span>Inícios</span><strong id="beta-started">—</strong><small>reservas iniciadas</small></article>
+              <article><span>Concluídas</span><strong id="beta-completed">—</strong><small>reservas finalizadas</small></article>
+              <article><span>Conversão</span><strong id="beta-conversion">—</strong><small>início → conclusão</small></article>
+              <article><span>Nota média</span><strong id="beta-rating">—</strong><small id="beta-rating-count">sem avaliações</small></article>
             </div>
             <form id="owner-feedback-form" class="beta-feedback">
               <label class="field"><span>De 1 a 5, como está sendo usar o AgendaLeve?</span>
