@@ -1,16 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --ink: #1b211d;
-  --muted: #707872;
-  --line: #e5e9e5;
-  --bg: #f7f9f6;
-  --card: #fff;
-  --accent: #315e48;
-  --accent-dark: #254a38;
-  --soft: #eaf1ec;
-  --soft-2: #f2f6f2;
-  --shadow: 0 14px 42px #1c2c2010;
+  --ink: #17241d;
+  --muted: #617067;
+  --line: #dce3dd;
+  --line-strong: #cbd6ce;
+  --bg: #f5f6f2;
+  --card: #ffffff;
+  --accent: #1f6a4a;
+  --accent-dark: #164b36;
+  --accent-deep: #103c2a;
+  --soft: #e7f0ea;
+  --soft-2: #eef3ef;
+  --sand: #f1ece2;
+  --sand-deep: #e4dac7;
+  --warning: #b5792a;
+  --danger: #9a4338;
+  --success: #2d7048;
+  --shadow-sm: 0 8px 24px rgba(23, 36, 29, .06);
+  --shadow: 0 16px 42px rgba(23, 36, 29, .09);
+  --shadow-lg: 0 28px 70px rgba(23, 36, 29, .14);
 }
 
 * { box-sizing: border-box; }
@@ -211,3 +220,221 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .manage-primary{width:100%;margin-top:4px}
 .manage-danger-zone{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
 @media(max-width:560px){.manage-danger-zone{align-items:stretch;flex-direction:column}.manage-danger-zone .secondary{width:100%}}
+
+
+/* 2026-10 visual system refresh
+   Forest green = action/brand, warm neutrals = calm working surface,
+   sage = secondary context, sand = gentle contrast. */
+html{background:var(--bg)}
+body{
+  background:
+    radial-gradient(circle at 78% 0%, rgba(31,106,74,.075), transparent 32rem),
+    linear-gradient(180deg,#f8f9f6 0,var(--bg) 34rem);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:#cfe3d6;color:var(--accent-deep)}
+a,button,input,select{transition:border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
+  outline:3px solid rgba(31,106,74,.2);
+  outline-offset:2px;
+}
+.app-shell{max-width:1160px}
+.topbar{
+  position:relative;
+  border-color:var(--line);
+}
+.brand{color:var(--accent-deep);letter-spacing:-.9px}
+.brand span{color:var(--warning)}
+.demo-dot{
+  background:var(--warning);
+  box-shadow:0 0 0 4px rgba(181,121,42,.11);
+}
+.intro{position:relative}
+.intro h1{color:var(--ink)}
+.intro h1 span{color:var(--accent)}
+.intro-copy{color:var(--muted);font-size:15px}
+.eyebrow{color:var(--accent);letter-spacing:1.55px}
+.intro-card{
+  overflow:hidden;
+  position:relative;
+  color:white;
+  background:linear-gradient(145deg,var(--accent-deep),var(--accent));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 18px 46px rgba(22,75,54,.18);
+}
+.intro-card::after{
+  content:"";
+  position:absolute;
+  width:150px;height:150px;
+  right:-55px;top:-65px;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+}
+.intro-icon{color:#d8eadf}
+.intro-card strong{color:#fff}
+.intro-card small{color:rgba(255,255,255,.74)}
+.tabs{
+  padding:4px;
+  background:#e9eeea;
+  border-color:#d8e0da;
+  box-shadow:inset 0 1px rgba(255,255,255,.72);
+}
+.tab{color:#526158}
+.tab:hover{color:var(--accent-deep);background:rgba(255,255,255,.46)}
+.tab.active{
+  color:#fff;
+  background:var(--accent);
+  box-shadow:0 5px 15px rgba(31,106,74,.16);
+}
+.view-heading h2{color:var(--ink)}
+.stat-card{
+  border-color:var(--line);
+  background:rgba(255,255,255,.92);
+  box-shadow:var(--shadow-sm);
+}
+.stat-card:nth-child(1){border-top:3px solid var(--accent)}
+.stat-card:nth-child(2){border-top:3px solid #648b72}
+.stat-card:nth-child(3){border-top:3px solid #bd945d}
+.stat-card span,.stat-card small{color:var(--muted)}
+.stat-card strong{color:var(--accent-deep)}
+.panel{
+  border-color:var(--line);
+  box-shadow:var(--shadow);
+}
+.panel-heading{border-bottom-color:var(--line)}
+.primary{
+  background:linear-gradient(180deg,#247653,var(--accent));
+  box-shadow:0 7px 18px rgba(31,106,74,.17);
+}
+.primary:hover{
+  background:linear-gradient(180deg,var(--accent),var(--accent-dark));
+  box-shadow:0 9px 22px rgba(31,106,74,.22);
+  transform:translateY(-1px);
+}
+.primary:active{transform:translateY(0);box-shadow:0 4px 10px rgba(31,106,74,.14)}
+.secondary{
+  color:var(--accent-dark);
+  background:var(--soft);
+  border:1px solid #d7e4da;
+}
+.secondary:hover{background:#dceadf;border-color:#c7dbcD}
+.text-button{color:var(--accent)}
+.text-button:hover{background:var(--soft)}
+.text-button.danger{color:var(--danger)}
+.field>span,.days-field legend{color:#34433a}
+.field input,.field select{
+  border-color:var(--line-strong);
+  background:#fff;
+  color:var(--ink);
+  box-shadow:0 1px 0 rgba(23,36,29,.02);
+}
+.field input:hover,.field select:hover{border-color:#b8c7bc}
+.field input:focus,.field select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(31,106,74,.11);
+}
+.field-help,.form-footnote{color:var(--muted)}
+.booking-panel{box-shadow:var(--shadow)}
+.booking-aside{
+  border-color:#d1dfd5;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(181,121,42,.09),transparent 45%),
+    linear-gradient(145deg,#e6f0e9 0%,#edf3ee 55%,#f3eee5 100%);
+  box-shadow:var(--shadow-sm);
+}
+.booking-aside h3{color:var(--accent-deep)}
+.booking-aside p{color:#53675b}
+.aside-icon{
+  background:var(--accent);
+  box-shadow:0 7px 16px rgba(31,106,74,.19);
+}
+.aside-eyebrow{color:var(--accent-dark)}
+.booking-summary-list>div{
+  border-color:rgba(31,106,74,.13);
+  background:rgba(255,255,255,.69);
+}
+.booking-summary-list span{color:#64756a}
+.booking-summary-list strong{color:var(--ink)}
+.hours-chip{
+  border:1px solid rgba(31,106,74,.12);
+  background:rgba(255,255,255,.78);
+}
+.empty{
+  border-color:#d5ddd7;
+  background:#fbfcfa;
+}
+.booking-row{border-color:var(--line)}
+.booking-contact{color:var(--accent)}
+.agenda-filters select{
+  border-color:var(--line-strong);
+  background:#fff;
+}
+.status-pending{background:#fbefd7;color:#775414}
+.status-confirmed{background:#dfeee4;color:#245c3d}
+.status-completed{background:#e7ece9;color:#43584c}
+.status-cancelled{background:#f5e5e2;color:#873d34}
+.cloud-callout{
+  border-color:#d7e1d9;
+  background:linear-gradient(135deg,#f8fbf8,#eef4ef);
+  box-shadow:var(--shadow-sm);
+}
+.public-mode-banner{
+  border-color:#dfd5c4;
+  background:linear-gradient(135deg,#f5f0e8,#fbfaf7);
+  box-shadow:var(--shadow-sm);
+}
+.publish-check{
+  border-color:var(--line);
+  background:#fafbf9;
+}
+.week-days label{border-color:var(--line-strong);background:#fff}
+.week-days label:has(input:checked){
+  border-color:#a6c6b1;
+  background:var(--soft);
+  color:var(--accent-dark);
+}
+.service-row{border-color:var(--line)}
+.plans{border-top:1px solid rgba(220,227,221,.72);margin-top:42px}
+.plan{
+  border-color:var(--line);
+  box-shadow:var(--shadow-sm);
+}
+.plan.featured{
+  border-color:#a8cbb4;
+  background:linear-gradient(145deg,#fff,#f5faf6);
+  box-shadow:0 0 0 1px rgba(31,106,74,.07),var(--shadow-sm);
+}
+.plan.featured .price,.plan.featured .plan-title strong{color:var(--accent-dark)}
+.price{color:var(--ink)}
+.footer{border-color:var(--line)}
+.footer strong{color:var(--accent-dark)}
+.account-dialog{
+  border-color:var(--line);
+  box-shadow:var(--shadow-lg);
+}
+.account-dialog::backdrop{
+  background:rgba(17,31,23,.52);
+  backdrop-filter:blur(5px);
+}
+.dialog-close{background:var(--soft);color:var(--accent-dark)}
+.confirmation-check{background:var(--soft);color:var(--success)}
+.confirmation-message{border-color:var(--line);background:#fafbf9}
+.cancel-link-box{border-color:#d4e1d7;background:#edf5ef}
+.manage-booking-panel{box-shadow:var(--shadow)}
+.manage-danger-zone{border-color:#edd6d2;background:#fcf6f5}
+.cancellation-button{color:var(--danger);background:#f5e5e2;border-color:#ecd1cc}
+.cancellation-button:hover{background:#f0d9d5}
+.toast{
+  background:var(--accent-deep);
+  box-shadow:0 12px 34px rgba(16,60,42,.28);
+}
+@media(max-width:760px){
+  body{background:linear-gradient(180deg,#f8f9f6,var(--bg) 28rem)}
+  .stat-card{box-shadow:none}
+}
+@media(max-width:520px){
+  .tabs{background:#e8ede9}
+  .tab.active{box-shadow:none}
+  .intro-card{box-shadow:0 12px 30px rgba(22,75,54,.14)}
+}
