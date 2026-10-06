@@ -180,6 +180,26 @@ Deno.serve(async (request: Request) => {
   if (serviceError) return json(503, { error: "Não foi possível consultar o serviço." }, origin);
   if (!service) return json(404, { error: "Serviço indisponível." }, origin);
 
+  const { data: timeOff, error: timeOffError } = await client
+    .from("agendaleve_time_off")
+    .select("id")
+    .eq("business_id", business.id)
+    .lte("starts_on", date)
+    .gte("ends_on", date)
+    .limit(1)
+    .maybeSingle();
+
+  if (timeOffError) return json(503, { error: "Não foi possível consultar os bloqueios da agenda." }, origin);
+  if (timeOff) {
+    return json(200, {
+      business: business.name,
+      service: service.name,
+      date,
+      slots: [],
+      blocked: true,
+    }, origin);
+  }
+
   const weekday = requestedDate.getUTCDay();
   const { data: hours, error: hoursError } = await client
     .from("agendaleve_business_hours")
