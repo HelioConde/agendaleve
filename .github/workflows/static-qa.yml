@@ -108,5 +108,6 @@ jobs:
           grep -qi 'data-ad-placement="public-footer"' index.html
           grep -qi 'AGENDALEVE_ADS' ads-config.js
           grep -qi 'pagead2.googlesyndication.com' ads.js
+          grep -qi 'allowedPlacement' ads.js
           ! grep -qi 'R$ 19' index.html
           ! grep -qi 'R$ 39' index.html
