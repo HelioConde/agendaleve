@@ -25,6 +25,10 @@ jobs:
           test -f README.md
           test -f FULLSTACK.md
           test -f MELHORIAS.md
+          test -f package.json
+          test -f playwright.config.js
+          test -f tests/e2e.spec.js
+          test -f .github/workflows/e2e.yml
           test -f supabase/functions/create-booking/index.ts
           test -f supabase/functions/booking-availability/index.ts
           test -f supabase/functions/cancel-booking/index.ts
