@@ -152,8 +152,8 @@ create policy "Owners manage their agendaleve_bookings"
   );
 
 -- This table and both RPCs are server-only. Never call them with a browser key.
-revoke all on public.agendaleve_booking_rate_limits from anon, authenticated;
-revoke all on public.agendaleve_businesses, public.agendaleve_business_hours, public.agendaleve_services, public.agendaleve_bookings from anon, authenticated;
+revoke all on public.agendaleve_booking_rate_limits from public, anon, authenticated;
+revoke all on public.agendaleve_businesses, public.agendaleve_business_hours, public.agendaleve_services, public.agendaleve_bookings from public, anon, authenticated;
 
 create or replace function public.agendaleve_consume_booking_rate_limit(
   p_ip_hash text,
@@ -161,7 +161,7 @@ create or replace function public.agendaleve_consume_booking_rate_limit(
 )
 returns boolean
 language plpgsql
-security definer
+security invoker
 set search_path = pg_catalog, public
 as $$
 declare
@@ -185,7 +185,7 @@ create or replace function public.agendaleve_create_public_booking(
 )
 returns table (booking_id uuid, booked_service text, booked_starts_at timestamptz)
 language plpgsql
-security definer
+security invoker
 set search_path = pg_catalog, public
 as $$
 declare
@@ -256,6 +256,9 @@ exception
     raise exception 'Time unavailable' using errcode = '23P01';
 end;
 $$;
+
+grant select, insert, update, delete on public.agendaleve_businesses, public.agendaleve_business_hours, public.agendaleve_services, public.agendaleve_bookings to service_role;
+grant select, insert, update, delete on public.agendaleve_booking_rate_limits to service_role;
 
 revoke all on function public.agendaleve_consume_booking_rate_limit(text, timestamptz) from public, anon, authenticated;
 revoke all on function public.agendaleve_create_public_booking(text, uuid, timestamptz, text) from public, anon, authenticated;
