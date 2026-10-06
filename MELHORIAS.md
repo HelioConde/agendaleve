@@ -29,14 +29,22 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 
 ## P1 — próximos
 
-- [ ] Adicionar proteção externa contra abuso/bots (Turnstile ou equivalente).
-- [ ] Criar lembretes automáticos de atendimento.
+- [ ] Ativar Turnstile em produção. **Integração cliente+servidor pronta; falta criar o widget Cloudflare e inserir sitekey/secret reais.**
+- [x] Criar lembretes automáticos por push, com opções de 24h e 2h e despacho agendado no Supabase.
 - [x] Permitir editar serviço sem precisar remover e criar novamente.
 - [x] Permitir expediente diferente por dia da semana.
 - [x] Adicionar status **não compareceu**.
 - [x] Busca de clientes/agendamentos por nome, telefone ou serviço.
 - [x] Exportar agenda em CSV.
 - [x] Testes E2E em Chromium cobrindo configuração, expediente por dia, criação/edição de serviço, reserva e busca na agenda.
+
+## Validação com usuários reais
+
+- [x] Instrumentação de funil e feedback sem PII.
+- [x] Formulário de feedback para proprietário e cliente.
+- [x] Plano de validação documentado em `VALIDACAO_BETA.md`.
+- [ ] Executar a primeira rodada com 5 proprietários e pelo menos 20 reservas feitas por pessoas reais.
+- [ ] Revisar métricas e feedback antes do lançamento amplo.
 
 ## P2 — evolução do produto
 
@@ -51,7 +59,8 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 - [ ] Dashboard de receita estimada.
 - [ ] Domínio/link personalizado.
 - [ ] PWA/instalação.
-- [ ] Notificações push e integrações com calendário.
+- [x] Notificações push web opt-in para lembretes.
+- [ ] Integrações com calendário.
 
 ## Regra de priorização
 
