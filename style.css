@@ -619,3 +619,8 @@ html[lang="en"] .tabs .tab{white-space:normal}
 .report-revenue strong{color:var(--accent-dark)}
 @media(max-width:760px){.report-metrics{grid-template-columns:1fr 1fr}.operations-report-head{align-items:flex-start;flex-direction:column;gap:4px}}
 @media(max-width:430px){.report-metrics{grid-template-columns:1fr}.report-card{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}.report-card strong{grid-column:2;grid-row:1/3;margin:0}.report-card small{grid-column:1}}
+
+.confirmation-calendar{display:flex;align-items:center;gap:12px;margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--soft-2)}
+.confirmation-calendar .secondary{flex:0 0 auto}
+.confirmation-calendar span{color:var(--muted);font-size:10px;line-height:1.4}
+@media(max-width:520px){.confirmation-calendar{align-items:stretch;flex-direction:column}.confirmation-calendar .secondary{width:100%}}
