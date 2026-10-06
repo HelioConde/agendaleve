@@ -26,6 +26,10 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - Edge Functions `booking-manage` e `reschedule-booking` para gestão segura da reserva pelo cliente;
 - RLS separando proprietário, visitante público e reservas privadas;
 - GitHub Pages + CI;
+- lembretes automáticos por Web Push (24h/2h) com cron do Supabase;
+- preferências e subscriptions push protegidas por RLS;
+- instrumentação beta sem PII e feedback 1–5;
+- integração Turnstile pronta para ativação com credenciais reais;
 - SEO básico.
 
 ## Backend
@@ -68,3 +72,12 @@ O repositório possui duas camadas automáticas:
 - **Browser E2E:** Playwright + Chromium cobrindo configuração do negócio, expediente por dia, criação/edição de serviço, reserva local e consulta na agenda.
 
 Execute localmente com `npm install` e `npm run test:e2e`.
+
+
+## Push e lembretes
+
+O proprietário pode ativar Web Push explicitamente no navegador e escolher lembretes de 24 horas e/ou 2 horas antes. O despacho roda a cada 5 minutos via `pg_cron` + `pg_net` e a Edge Function `reminder-dispatch`. As chaves privadas VAPID e o segredo do cron ficam no Supabase Vault, nunca no frontend.
+
+## Validação beta
+
+Consulte [VALIDACAO_BETA.md](./VALIDACAO_BETA.md). O produto já coleta eventos de funil e feedback sem PII, mas validação real só será considerada concluída depois da rodada com pessoas reais.
