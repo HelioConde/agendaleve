@@ -506,3 +506,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
 .service-form-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .status-no_show{background:#eee8f5;color:#634a78}
 @media(max-width:760px){.agenda-tools{width:100%;justify-content:stretch}.agenda-search{min-width:100%!important}.agenda-export{width:100%}}
+
+.weekly-hours-field{margin-top:16px}
+.weekly-hours{display:grid;gap:7px;margin-top:10px}
+.weekly-hours-row{display:grid;grid-template-columns:minmax(120px,1.2fr) minmax(90px,.8fr) minmax(90px,.8fr);align-items:end;gap:9px;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#fafbf9;opacity:.66}
+.weekly-hours-row.enabled{border-color:#c4d9cb;background:#f5faf6;opacity:1}
+.weekly-hours-row>label:not(.day-toggle)>span{display:block;margin-bottom:4px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.weekly-hours-row input[type="time"]{width:100%;min-height:36px;padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink)}
+.day-toggle{display:flex;align-items:center;gap:8px;min-height:36px;font-size:11px;font-weight:800}
+.day-toggle input{accent-color:var(--accent)}
+@media(max-width:560px){.weekly-hours-row{grid-template-columns:1fr 1fr}.day-toggle{grid-column:1/-1}}
