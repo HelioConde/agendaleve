@@ -686,6 +686,28 @@ async function copyPublicBookingLink() {
   }
 }
 
+function bookingOperationsReport(bookings, now = new Date()) {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - 29);
+  const startKey = localDateString(start);
+  const endKey = localDateString(now);
+  const periodBookings = bookings.filter(booking => booking.date >= startKey && booking.date <= endKey);
+  const completed = periodBookings.filter(booking => booking.status === 'completed');
+  const noShow = periodBookings.filter(booking => booking.status === 'no_show');
+  const cancelled = periodBookings.filter(booking => booking.status === 'cancelled');
+  const attendanceBase = completed.length + noShow.length;
+  const attendanceRate = attendanceBase ? Math.round((completed.length / attendanceBase) * 100) : null;
+  const estimatedRevenue = completed.reduce((sum, booking) => sum + (Number(booking.price) || 0), 0);
+  return {
+    completed: completed.length,
+    noShow: noShow.length,
+    cancelled: cancelled.length,
+    attendanceRate,
+    estimatedRevenue
+  };
+}
+
 function renderDashboard() {
   const config = currentConfig();
   const now = new Date();
@@ -725,6 +747,15 @@ function renderDashboard() {
   document.querySelector('#stat-upcoming').textContent = String(upcomingActive.length);
   document.querySelector('#stat-services').textContent = String(config.services.length);
   document.querySelector('#stat-hours').textContent = weeklyHoursSummary(config);
+  const report = bookingOperationsReport(allBookings, now);
+  const attendance = document.querySelector('#report-attendance');
+  const noShow = document.querySelector('#report-no-show');
+  const cancelled = document.querySelector('#report-cancelled');
+  const revenue = document.querySelector('#report-revenue');
+  if (attendance) attendance.textContent = report.attendanceRate == null ? '—' : report.attendanceRate + '%';
+  if (noShow) noShow.textContent = String(report.noShow);
+  if (cancelled) cancelled.textContent = String(report.cancelled);
+  if (revenue) revenue.textContent = formatPrice(report.estimatedRevenue);
   renderSetupProgress(config);
   const filterCount = document.querySelector('#booking-filter-count');
   if (filterCount) filterCount.textContent = bookings.length === 1 ? '1 agendamento neste filtro.' : `${bookings.length} agendamentos neste filtro.`;
