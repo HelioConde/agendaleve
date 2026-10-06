@@ -62,6 +62,7 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 - [x] Notificações push web opt-in para lembretes.
 - [x] Teste de push pelo painel.
 - [x] Métricas beta dos últimos 30 dias no painel do proprietário.
+- [x] Exportar uma reserva confirmada como arquivo `.ics` compatível com os principais calendários.
 - [ ] Integrações com calendário.
 
 ## Regra de priorização
