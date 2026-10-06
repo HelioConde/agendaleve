@@ -1,19 +1,28 @@
 # AgendaLeve
 
-Protótipo navegável para organizar serviços e receber reservas de pequenos negócios. O fluxo inclui painel de agenda, configuração de nome/expediente/dias de atendimento, cadastro de serviços com duração e preço, e uma página demonstrativa para o cliente escolher um horário disponível.
+Agenda online para pequenos negócios, com painel do proprietário e página pública de reservas.
 
 ## Estado atual
 
-O esquema do AgendaLeve está aplicado no projeto Supabase compartilhado `pizzaria-db`, com tabelas isoladas pelo prefixo `agendaleve_`. A Edge Function `create-booking` está publicada para validar e registrar reservas sem expor a chave de serviço.
+- modo local sem conta;
+- Supabase Auth;
+- negócio, expediente, serviços e reservas persistidos no `pizzaria-db`;
+- link público por `?negocio=slug`;
+- disponibilidade em tempo real;
+- Edge Function `booking-availability` sem exposição de dados privados;
+- Edge Function `create-booking` com validação, rate limit e prevenção de conflitos;
+- RLS separando proprietário, visitante público e reservas privadas;
+- GitHub Pages + CI;
+- SEO básico.
 
-A interface publicada ainda usa dados locais neste navegador. Cadastro/login, sincronização, configuração de negócios e catálogo público ainda não estão conectados ao Supabase. A publicação da função, portanto, não significa que a página já esteja recebendo reservas reais.
+## Backend
 
-## Rodar localmente
+Tabelas:
+- `agendaleve_businesses`
+- `agendaleve_business_hours`
+- `agendaleve_services`
+- `agendaleve_bookings`
+- `agendaleve_booking_rate_limits`
+- `product_subscriptions`
 
-Abra `index.html` em um navegador moderno ou publique como site estático. A demonstração atual guarda os dados em `localStorage`.
-
-## Próxima etapa
-
-Conectar cadastro e login, painel do proprietário e catálogo/horários públicos. Depois, substituir o fluxo demonstrativo pelo endpoint de reserva. Consulte [SUPABASE_SETUP.md](SUPABASE_SETUP.md) para o estado do backend e as etapas restantes.
-
-Não coloque chaves privadas no código publicado.
+As migrations e Edge Functions ficam em `supabase/`. Consulte também `SUPABASE_SETUP.md` e `FULLSTACK.md`.
