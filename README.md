@@ -13,7 +13,10 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - disponibilidade em tempo real;
 - telefone/WhatsApp privado por reserva para retorno do estabelecimento;
 - filtros da agenda por período e status;
-- ações rápidas para confirmar, concluir e cancelar atendimentos;
+- busca da agenda por cliente, telefone ou serviço;
+- exportação da agenda em CSV;
+- ações rápidas para confirmar, concluir, marcar não comparecimento e cancelar atendimentos;
+- edição de serviços existentes sem precisar recriar;
 - cancelamento seguro pelo cliente através de link privado com token;
 - reagendamento pelo próprio cliente, sem login e sem expor dados privados;
 - consulta de disponibilidade que desconsidera a própria reserva durante o reagendamento;
