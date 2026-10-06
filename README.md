@@ -1,13 +1,19 @@
 # AgendaLeve
 
-Protótipo navegável para organizar serviços e receber reservas de pequenos negócios. O fluxo inclui painel de agenda, configuração de nome/expediente/dias de atendimento, cadastro de serviços com duração e preço, e uma página demonstrativa para o cliente escolher um horário disponível. O expediente inicial é 8h–19h e cada atendimento ocupa a duração configurada para o serviço.
+Protótipo navegável para organizar serviços e receber reservas de pequenos negócios. O fluxo inclui painel de agenda, configuração de nome/expediente/dias de atendimento, cadastro de serviços com duração e preço, e uma página demonstrativa para o cliente escolher um horário disponível.
 
-O sistema considera duração e conflitos entre atendimentos, bloqueia horários passados e permite cancelar reservas. A interface ainda usa dados locais; o repositório já inclui uma base Supabase inicial, mas autenticação, sincronização entre dispositivos, reservas públicas, lembretes e pagamentos ainda não estão conectados.
+## Estado atual
+
+O esquema do AgendaLeve está aplicado no projeto Supabase compartilhado `pizzaria-db`, com tabelas isoladas pelo prefixo `agendaleve_`. A Edge Function `create-booking` está publicada para validar e registrar reservas sem expor a chave de serviço.
+
+A interface publicada ainda usa dados locais neste navegador. Cadastro/login, sincronização, configuração de negócios e catálogo público ainda não estão conectados ao Supabase. A publicação da função, portanto, não significa que a página já esteja recebendo reservas reais.
 
 ## Rodar localmente
 
-Abra `index.html` em um navegador moderno ou publique como site estático. Os dados de demonstração usam `localStorage` neste navegador.
+Abra `index.html` em um navegador moderno ou publique como site estático. A demonstração atual guarda os dados em `localStorage`.
 
-## Próxima etapa para produção
+## Próxima etapa
 
-Consulte [SUPABASE_SETUP.md](SUPABASE_SETUP.md) para preparar e validar a base antes de conectar a interface. Não coloque chaves privadas no código publicado.
+Conectar cadastro e login, painel do proprietário e catálogo/horários públicos. Depois, substituir o fluxo demonstrativo pelo endpoint de reserva. Consulte [SUPABASE_SETUP.md](SUPABASE_SETUP.md) para o estado do backend e as etapas restantes.
+
+Não coloque chaves privadas no código publicado.
