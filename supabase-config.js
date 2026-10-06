@@ -19,6 +19,9 @@
       }
     ),
     functionUrl: 'https://bnlvvsjgpywpbfhwdcan.supabase.co/functions/v1/create-booking',
-    availabilityUrl: 'https://bnlvvsjgpywpbfhwdcan.supabase.co/functions/v1/booking-availability'
+    availabilityUrl: 'https://bnlvvsjgpywpbfhwdcan.supabase.co/functions/v1/booking-availability',
+    pushVapidPublicKey: 'BKUKcwtcaU6KvvO-koRAKfZ29hnQzS68Qj-HUB7a_h0HgKbSGmkGWFP2E5S0tgf2utuFxokUhlNkgZSxDXwvRPE',
+    // Preencha somente depois de criar o widget real no Cloudflare Turnstile.
+    turnstileSiteKey: ''
   };
 })();
