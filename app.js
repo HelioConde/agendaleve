@@ -169,6 +169,28 @@ function uiText(value) {
   return window.AppI18n?.t?.(value) || value;
 }
 
+async function persistAccountLocale() {
+  if (!currentUser || !supabaseClient) return;
+  const locale = currentLocale();
+  if (currentUser.user_metadata?.agendaleve_language === locale) return;
+  try {
+    const { data, error } = await supabaseClient.auth.updateUser({
+      data: { agendaleve_language: locale }
+    });
+    if (error) throw error;
+    if (data?.user) currentUser = data.user;
+  } catch (error) {
+    console.warn('AgendaLeve language preference could not be synced:', error?.message || error);
+  }
+}
+
+function applyAccountLocale(user) {
+  const locale = user?.user_metadata?.agendaleve_language;
+  if ((locale === 'en' || locale === 'pt-BR') && locale !== currentLocale()) {
+    window.AppI18n?.setLocale?.(locale);
+  }
+}
+
 function showToast(message) {
   const toast = document.querySelector('#toast');
   toast.textContent = uiText(message);
@@ -1415,6 +1437,7 @@ function initAccount() {
     currentBusiness = null;
 
     if (user) {
+      applyAccountLocale(user);
       window.setTimeout(loadOwnerCloud, 0);
     } else {
       activeConfig = readLocalConfig();
@@ -2080,6 +2103,7 @@ window.addEventListener('app-language-change', () => {
   updateBookingSummary();
   updatePushUi();
   loadBetaSummary();
+  persistAccountLocale();
   if (managedBooking) updateManagedBookingSummary();
 });
 
