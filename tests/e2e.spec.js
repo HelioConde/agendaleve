@@ -99,6 +99,11 @@ test('configura expediente, edita serviço, reserva e encontra cliente na agenda
 
   await expect(page.getByRole('heading', { name: 'Seu horário está reservado!' })).toBeVisible();
 
+  const calendarDownloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Adicionar ao calendário' }).click();
+  const calendarDownload = await calendarDownloadPromise;
+  expect(calendarDownload.suggestedFilename()).toMatch(/^agendaleve-.*\.ics$/);
+
   await page.getByRole('button', { name: 'Minha agenda' }).click();
   await page.locator('#booking-search').fill('Cliente E2E');
   await expect(page.locator('#booking-list')).toContainText('Cliente E2E');
