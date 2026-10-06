@@ -519,6 +519,7 @@ function switchView(name) {
   if (name === 'reservas') {
     updateBookingSummary();
     refreshAvailability();
+    ensureTurnstileWidget();
   }
   if (name === 'configuracao') fillSettings();
 }
@@ -886,6 +887,14 @@ function showBookingConfirmation(booking) {
   document.querySelector('#bookingConfirmation').hidden = false;
   document.querySelector('#cancelBookingPanel').hidden = true;
   document.querySelector('#bookingConfirmation h2').focus();
+  if (clientFeedbackForm) {
+    clientFeedbackForm.hidden = false;
+    clientFeedbackForm.dataset.rating = '';
+    clientFeedbackForm.querySelectorAll('[data-feedback-rating]').forEach(button => button.classList.remove('selected'));
+    clientFeedbackForm.querySelector('[type="submit"]').disabled = true;
+    clientFeedbackForm.querySelector('.feedback-status').textContent = '';
+    clientFeedbackForm.elements.comment.value = '';
+  }
 }
 
 function managementBackUrl() {
@@ -934,6 +943,7 @@ async function refreshRescheduleAvailability() {
 }
 
 async function loadManagedBooking() {
+  trackBetaEvent('booking_manage_opened', {}, 'client');
   const panel = document.querySelector('#cancelBookingPanel');
   panel.hidden = false;
   document.querySelector('#bookingFormLayout').hidden = true;
@@ -1074,6 +1084,9 @@ async function loadOwnerCloud() {
     cloudLoading = false;
     renderAll();
     updateAccountUi();
+    await loadReminderPreferences();
+    await updatePushUi();
+    trackBetaEvent('owner_dashboard_view', { hasBusiness: false }, 'owner');
     return;
   }
 
@@ -1093,6 +1106,9 @@ async function loadOwnerCloud() {
   cloudLoading = false;
   renderAll();
   updateAccountUi();
+  await loadReminderPreferences();
+  await updatePushUi();
+  trackBetaEvent('owner_dashboard_view', { hasBusiness: true }, 'owner');
 }
 
 async function loadPublicBusiness() {
@@ -1124,6 +1140,8 @@ async function loadPublicBusiness() {
   document.querySelector('#booking-mode-note').textContent = 'Os horários são consultados em tempo real e a reserva é validada no servidor.';
   renderServiceOptions();
   switchView('reservas');
+  await ensureTurnstileWidget();
+  trackBetaEvent('page_view', { mode: 'public_booking' }, 'client');
 }
 
 async function saveCloudSettings(values, schedule) {
@@ -1323,6 +1341,8 @@ function initAccount() {
       activeConfig = readLocalConfig();
       activeBookings = readLocalBookings();
       renderAll();
+      loadReminderPreferences();
+      updatePushUi();
     }
     updateAccountUi();
   };
@@ -1527,6 +1547,11 @@ configForm.querySelectorAll('[name="dayEnabled"]').forEach(input => {
 bookingService.addEventListener('change', refreshAvailability);
 bookingDate.addEventListener('change', refreshAvailability);
 bookingTime.addEventListener('change', updateBookingSummary);
+bookingForm.addEventListener('input', () => {
+  if (bookingStartedTracked) return;
+  bookingStartedTracked = true;
+  trackBetaEvent('booking_started', { publicMode: Boolean(publicMode) }, 'client');
+}, { once: true });
 bookingForm.elements.phone.addEventListener('input', event => {
   event.currentTarget.value = maskPhoneInput(event.currentTarget.value);
 });
