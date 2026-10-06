@@ -516,3 +516,32 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
 .day-toggle{display:flex;align-items:center;gap:8px;min-height:36px;font-size:11px;font-weight:800}
 .day-toggle input{accent-color:var(--accent)}
 @media(max-width:560px){.weekly-hours-row{grid-template-columns:1fr 1fr}.day-toggle{grid-column:1/-1}}
+
+.turnstile-slot{margin:2px 0 12px;min-height:0}
+.turnstile-slot:not([hidden]){min-height:65px}
+.settings-secondary-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.inline-panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.inline-panel-heading h3{margin:0}
+.inline-panel-heading p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.feature-badge{display:inline-flex;padding:4px 8px;border-radius:99px;background:var(--soft);color:var(--accent-dark);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.feature-badge.neutral{background:var(--sand);color:#715d3f}
+.reminder-options{display:grid;gap:8px;margin:13px 0}
+.reminder-options label{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fafbf9;cursor:pointer}
+.reminder-options input{margin-top:2px;accent-color:var(--accent)}
+.reminder-options strong,.reminder-options small{display:block}
+.reminder-options strong{font-size:11px}
+.reminder-options small{margin-top:2px;color:var(--muted);font-size:9px;line-height:1.4}
+.notification-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.notification-status{margin:10px 0 0;color:var(--muted);font-size:10px}
+.beta-feedback{margin-top:10px}
+.beta-feedback>strong{font-size:12px}
+.beta-feedback>p{margin:4px 0 9px;color:var(--muted);font-size:10px}
+.beta-feedback textarea{width:100%;resize:vertical;padding:9px 10px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink);font:inherit;font-size:11px}
+.rating-row{display:flex;gap:6px;margin:8px 0}
+.rating-row button{width:34px;height:34px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--muted);font-weight:800;cursor:pointer}
+.rating-row button:hover,.rating-row button.selected{border-color:var(--accent);background:var(--soft);color:var(--accent-dark)}
+.feedback-status{display:block;margin-top:8px;color:var(--muted);font-size:10px}
+.beta-feedback-client{margin-top:16px;padding:14px;border:1px solid #d9e4dc;border-radius:11px;background:#f8fbf8;text-align:left}
+.beta-feedback-client textarea{margin-bottom:8px}
+@media(max-width:820px){.settings-secondary-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.notification-actions>*{width:100%}}
