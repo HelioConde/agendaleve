@@ -18,6 +18,7 @@ const DEFAULT_CONFIG = {
     5: { opensAt: '08:00', closesAt: '19:00' }
   },
   services: [{ id: 'service-initial', name: 'Atendimento inicial', duration: 60, price: 0 }],
+  timeOff: [],
   isPublic: false,
   slug: ''
 };
@@ -32,6 +33,8 @@ const publicMode = Boolean(publicSlug);
 
 const configForm = document.querySelector('#settings-form');
 const serviceForm = document.querySelector('#service-form');
+const timeOffForm = document.querySelector('#time-off-form');
+const timeOffList = document.querySelector('#time-off-list');
 const bookingForm = document.querySelector('#booking-form');
 const bookingService = document.querySelector('#booking-service');
 const bookingDate = document.querySelector('#booking-date');
@@ -72,7 +75,9 @@ let currentUser = null;
 let currentBusiness = null;
 let activeConfig = readLocalConfig();
 let activeBookings = readLocalBookings();
+let activeTimeOff = Array.isArray(activeConfig.timeOff) ? activeConfig.timeOff : [];
 let availableSlotMap = new Map();
+let availabilityBlocked = false;
 let managedBooking = null;
 let lastConfirmedBooking = null;
 let editingServiceId = null;
@@ -125,7 +130,8 @@ function readLocalConfig() {
     ...DEFAULT_CONFIG,
     ...stored,
     days: Array.isArray(stored.days) ? stored.days.map(Number) : DEFAULT_CONFIG.days,
-    services: Array.isArray(stored.services) ? stored.services : DEFAULT_CONFIG.services
+    services: Array.isArray(stored.services) ? stored.services : DEFAULT_CONFIG.services,
+    timeOff: Array.isArray(stored.timeOff) ? stored.timeOff : []
   };
   merged.hoursByDay = normalizeHoursByDay(merged);
   return merged;
@@ -575,6 +581,54 @@ function currentBookings() {
   return activeBookings || [];
 }
 
+function normalizeTimeOffEntry(entry, index = 0) {
+  const startsOn = String(entry?.startsOn || entry?.starts_on || '').slice(0, 10);
+  const endsOn = String(entry?.endsOn || entry?.ends_on || '').slice(0, 10);
+  return {
+    id: String(entry?.id || `local-time-off-${index}`),
+    startsOn,
+    endsOn,
+    label: String(entry?.label || '').slice(0, 80)
+  };
+}
+
+function blockedPeriodForDate(date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) return null;
+  return activeTimeOff.find(item => item.startsOn <= date && item.endsOn >= date) || null;
+}
+
+function timeOffDateLabel(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return value || '';
+  return new Date(value + 'T12:00:00').toLocaleDateString(currentLocale(), {
+    day: '2-digit', month: 'short', year: 'numeric'
+  }).replace('.', '');
+}
+
+function renderTimeOff() {
+  if (!timeOffList) return;
+  if (!activeTimeOff.length) {
+    timeOffList.innerHTML = '<div class="time-off-empty">' + uiText('Nenhum bloqueio cadastrado.') + '</div>';
+    return;
+  }
+  timeOffList.innerHTML = activeTimeOff
+    .slice()
+    .sort((a, b) => a.startsOn.localeCompare(b.startsOn))
+    .map(item => {
+      const range = item.startsOn === item.endsOn
+        ? timeOffDateLabel(item.startsOn)
+        : timeOffDateLabel(item.startsOn) + ' → ' + timeOffDateLabel(item.endsOn);
+      return '<article class="time-off-item">' +
+        '<div><strong>' + escapeHtml(item.label || uiText('Período bloqueado')) + '</strong><span>' + escapeHtml(range) + '</span></div>' +
+        '<button class="text-button danger" type="button" data-time-off-delete="' + escapeHtml(item.id) + '">' + uiText('Remover') + '</button>' +
+      '</article>';
+    }).join('');
+}
+
+function persistLocalTimeOff() {
+  activeConfig = { ...currentConfig(), timeOff: activeTimeOff };
+  writeLocalConfig(activeConfig);
+}
+
 function serviceById(id) {
   return currentConfig().services.find(service => service.id === id);
 }
@@ -886,6 +940,7 @@ function renderServiceOptions() {
 function availableTimesLocal(date, service) {
   const config = currentConfig();
   if (!service || !date) return [];
+  if (blockedPeriodForDate(date)) return [];
   const selectedDate = new Date(`${date}T00:00:00`);
   if (!config.days.includes(selectedDate.getDay())) return [];
 
@@ -923,6 +978,7 @@ async function fetchCloudAvailability(date, service, management = false) {
   }
   const { data, error } = await supabaseClient.functions.invoke('booking-availability', { body });
   if (error) throw error;
+  availabilityBlocked = Boolean(data?.blocked);
   availableSlotMap = new Map((data?.slots || []).map(slot => [slot.time, slot.startsAt]));
   return (data?.slots || []).map(slot => slot.time);
 }
@@ -983,6 +1039,7 @@ async function refreshAvailability() {
       times = await fetchCloudAvailability(date, service);
     } else {
       availableSlotMap = new Map();
+      availabilityBlocked = Boolean(date && blockedPeriodForDate(date));
       times = availableTimesLocal(date, service);
     }
   } catch {
@@ -997,6 +1054,7 @@ async function refreshAvailability() {
   bookingForm.querySelector('[type="submit"]').disabled = times.length === 0;
 
   if (!date) bookingTime.firstElementChild.textContent = 'Escolha uma data';
+  else if (availabilityBlocked) bookingTime.firstElementChild.textContent = 'Data bloqueada';
   else if (!openDay) bookingTime.firstElementChild.textContent = `Sem atendimento: ${dayName}`;
   else if (!service) bookingTime.firstElementChild.textContent = 'Cadastre um serviço';
 
@@ -1306,18 +1364,20 @@ async function loadOwnerCloud() {
   }
 
   currentBusiness = business;
-  const [hoursResult, servicesResult, bookingsResult] = await Promise.all([
+  const [hoursResult, servicesResult, bookingsResult, timeOffResult] = await Promise.all([
     supabaseClient.from('agendaleve_business_hours').select('*').eq('business_id', business.id).order('weekday'),
     supabaseClient.from('agendaleve_services').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at'),
-    supabaseClient.from('agendaleve_bookings').select('*').eq('business_id', business.id).order('starts_at')
+    supabaseClient.from('agendaleve_bookings').select('*').eq('business_id', business.id).order('starts_at'),
+    supabaseClient.from('agendaleve_time_off').select('*').eq('business_id', business.id).order('starts_on')
   ]);
 
-  if (hoursResult.error || servicesResult.error || bookingsResult.error) {
+  if (hoursResult.error || servicesResult.error || bookingsResult.error || timeOffResult.error) {
     showAccountMessage('Parte da agenda não pôde ser carregada.');
   }
 
   activeConfig = cloudConfigFromRows(business, hoursResult.data || [], servicesResult.data || []);
   activeBookings = cloudBookingsFromRows(bookingsResult.data || [], business.timezone);
+  activeTimeOff = (timeOffResult.data || []).map(normalizeTimeOffEntry);
   cloudLoading = false;
   renderAll();
   updateAccountUi();
@@ -1460,6 +1520,7 @@ function authErrorText(error) {
 function renderAll() {
   fillSettings();
   renderServices();
+  renderTimeOff();
   renderServiceOptions();
   renderDashboard();
   refreshAvailability();
@@ -1559,6 +1620,7 @@ function initAccount() {
     } else {
       activeConfig = readLocalConfig();
       activeBookings = readLocalBookings();
+      activeTimeOff = Array.isArray(activeConfig.timeOff) ? activeConfig.timeOff.map(normalizeTimeOffEntry) : [];
       renderAll();
       loadReminderPreferences();
       updatePushUi();
@@ -1640,6 +1702,88 @@ configForm.addEventListener('submit', async event => {
   writeLocalConfig(activeConfig);
   renderAll();
   showToast('Informações salvas neste dispositivo.');
+});
+
+timeOffForm?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const values = Object.fromEntries(new FormData(timeOffForm));
+  const startsOn = String(values.startsOn || '');
+  const endsOn = String(values.endsOn || '');
+  const label = String(values.label || '').trim().slice(0, 80);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startsOn) || !/^\d{4}-\d{2}-\d{2}$/.test(endsOn) || endsOn < startsOn) {
+    showToast('Confira o período do bloqueio.');
+    return;
+  }
+
+  const button = timeOffForm.querySelector('[type="submit"]');
+  button.disabled = true;
+  try {
+    if (currentUser) {
+      if (!currentBusiness) {
+        showToast('Salve primeiro as informações do negócio.');
+        return;
+      }
+      const { data, error } = await supabaseClient
+        .from('agendaleve_time_off')
+        .insert({ business_id: currentBusiness.id, starts_on: startsOn, ends_on: endsOn, label })
+        .select('*')
+        .single();
+      if (error) throw error;
+      activeTimeOff = [...activeTimeOff, normalizeTimeOffEntry(data)];
+    } else {
+      activeTimeOff = [...activeTimeOff, normalizeTimeOffEntry({
+        id: crypto.randomUUID?.() || 'local-time-off-' + Date.now(),
+        startsOn,
+        endsOn,
+        label
+      }, activeTimeOff.length)];
+      persistLocalTimeOff();
+    }
+    timeOffForm.reset();
+    const today = localDateString(new Date());
+    timeOffForm.elements.startsOn.min = today;
+    timeOffForm.elements.endsOn.min = today;
+    renderTimeOff();
+    refreshAvailability();
+    showToast('Período bloqueado.');
+  } catch (error) {
+    console.error(error);
+    showToast('Não foi possível salvar o bloqueio.');
+  } finally {
+    button.disabled = false;
+  }
+});
+
+timeOffList?.addEventListener('click', async event => {
+  const button = event.target.closest('[data-time-off-delete]');
+  if (!button) return;
+  const id = button.dataset.timeOffDelete;
+  button.disabled = true;
+  try {
+    if (currentUser) {
+      const { error } = await supabaseClient.from('agendaleve_time_off').delete().eq('id', id);
+      if (error) throw error;
+    }
+    activeTimeOff = activeTimeOff.filter(item => item.id !== id);
+    if (!currentUser) persistLocalTimeOff();
+    renderTimeOff();
+    refreshAvailability();
+    showToast('Bloqueio removido.');
+  } catch (error) {
+    console.error(error);
+    button.disabled = false;
+    showToast('Não foi possível remover o bloqueio.');
+  }
+});
+
+timeOffForm?.elements.startsOn?.addEventListener('change', event => {
+  const value = event.currentTarget.value;
+  if (value) {
+    timeOffForm.elements.endsOn.min = value;
+    if (!timeOffForm.elements.endsOn.value || timeOffForm.elements.endsOn.value < value) {
+      timeOffForm.elements.endsOn.value = value;
+    }
+  }
 });
 
 serviceForm.addEventListener('submit', async event => {
@@ -2185,6 +2329,7 @@ function initializeLocal() {
   if (!localStorage.getItem(STORAGE.config)) writeLocalConfig(DEFAULT_CONFIG);
   activeConfig = readLocalConfig();
   activeBookings = readLocalBookings();
+  activeTimeOff = Array.isArray(activeConfig.timeOff) ? activeConfig.timeOff.map(normalizeTimeOffEntry) : [];
   bookingDate.min = localDateString(new Date());
   renderAll();
 }
