@@ -8,6 +8,8 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - Supabase Auth;
 - negócio, expediente, serviços e reservas persistidos no `pizzaria-db`;
 - link público por `?negocio=slug`;
+- experiência separada entre painel do negócio e página do cliente;
+- resumo vivo da reserva com serviço, duração, preço, data e horário;
 - disponibilidade em tempo real;
 - telefone/WhatsApp privado por reserva para retorno do estabelecimento;
 - filtros da agenda por período e status;
