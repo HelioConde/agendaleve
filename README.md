@@ -32,6 +32,14 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - integração Turnstile pronta para ativação com credenciais reais;
 - SEO básico.
 
+## Idiomas
+
+- **PT-BR** é o idioma principal, padrão e fallback.
+- **English (EN)** está disponível pelo seletor no topo.
+- A preferência fica salva no navegador.
+- Fluxos principais, mensagens, estados dinâmicos, datas e valores acompanham o idioma ativo.
+- Conteúdo cadastrado pelo usuário, como nomes de clientes, serviços e negócios, não é traduzido automaticamente.
+
 ## Backend
 
 Tabelas:
