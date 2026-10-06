@@ -155,9 +155,7 @@ create policy "Owners manage their bookings"
 
 -- This table and both RPCs are server-only. Never call them with a browser key.
 revoke all on public.booking_rate_limits from anon, authenticated;
-revoke all on public.bookings from anon;
-revoke all on function public.consume_booking_rate_limit(text, timestamptz) from public, anon, authenticated;
-revoke all on function public.create_public_booking(text, uuid, timestamptz, text) from public, anon, authenticated;
+revoke all on public.businesses, public.business_hours, public.services, public.bookings from anon, authenticated;
 
 create or replace function public.consume_booking_rate_limit(
   p_ip_hash text,
@@ -259,5 +257,7 @@ exception
 end;
 $$;
 
+revoke all on function public.consume_booking_rate_limit(text, timestamptz) from public, anon, authenticated;
+revoke all on function public.create_public_booking(text, uuid, timestamptz, text) from public, anon, authenticated;
 grant execute on function public.consume_booking_rate_limit(text, timestamptz) to service_role;
 grant execute on function public.create_public_booking(text, uuid, timestamptz, text) to service_role;
