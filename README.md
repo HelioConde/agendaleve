@@ -2,6 +2,16 @@
 
 Agenda online para pequenos negócios, com painel do proprietário e página pública de reservas.
 
+## Status de desenvolvimento
+
+**MVP técnico concluído e publicado.** O AgendaLeve sai da fase de desenvolvimento principal e entra em **validação pós-MVP**.
+
+- CI crítico: Static QA, Browser E2E e GitHub Pages aprovados.
+- Backend principal e Edge Functions publicados no Supabase.
+- PT-BR/EN, anúncios preparados, PWA, push, branding, relatórios, calendário e bloqueios/folgas concluídos.
+- Pendências externas/manuais foram movidas para a [issue #1 — Validação humana e configuração externa](https://github.com/HelioConde/agendaleve/issues/1).
+- Novas features P2 ficam pausadas até surgir feedback real, bug crítico ou requisito de segurança.
+
 ## Estado atual
 
 - modo local sem conta;
