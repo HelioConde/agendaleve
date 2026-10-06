@@ -1585,6 +1585,11 @@ bookingForm.addEventListener('submit', async event => {
     let booking;
 
     if (currentBusiness?.is_public && supabaseClient) {
+      if (turnstileIsConfigured() && !turnstileToken) {
+        await ensureTurnstileWidget();
+        showToast('Confirme a verificação anti-bot antes de reservar.');
+        return;
+      }
       const startsAt = availableSlotMap.get(values.time);
       if (!startsAt) {
         await refreshAvailability();
@@ -1596,7 +1601,8 @@ bookingForm.addEventListener('submit', async event => {
           serviceId: service.id,
           startsAt,
           clientName: values.client.trim(),
-          clientPhone: phone
+          clientPhone: phone,
+          turnstileToken
         }
       });
       if (error) throw error;
@@ -1613,6 +1619,7 @@ bookingForm.addEventListener('submit', async event => {
         time: values.time,
         status: 'confirmed'
       };
+      resetTurnstile();
       if (currentUser && !publicMode) activeBookings.push(booking);
     } else if (currentUser && currentBusiness) {
       const startDate = new Date(`${values.date}T${values.time}:00`);
@@ -1652,6 +1659,7 @@ bookingForm.addEventListener('submit', async event => {
     }
 
     showBookingConfirmation(booking);
+    trackBetaEvent('booking_created', { mode: currentBusiness?.is_public ? 'cloud' : 'local' }, 'client');
     bookingForm.reset();
     bookingDate.min = localDateString(new Date());
     bookingDate.value = '';
@@ -1660,8 +1668,9 @@ bookingForm.addEventListener('submit', async event => {
     await refreshAvailability();
   } catch (error) {
     console.error(error);
+    if (currentBusiness?.is_public && supabaseClient) resetTurnstile();
     await refreshAvailability();
-    showToast('Esse horário pode ter acabado de ser reservado. Escolha outro.');
+    showToast('Não foi possível concluir. Revise a verificação e o horário e tente novamente.');
   } finally {
     button.disabled = false;
   }
@@ -1850,6 +1859,70 @@ function exportBookingsCsv() {
 }
 
 exportBookingsButton?.addEventListener('click', exportBookingsCsv);
+pushToggleButton?.addEventListener('click', async () => {
+  pushToggleButton.disabled = true;
+  try {
+    const subscription = await getCurrentPushSubscription();
+    if (subscription && Notification.permission === 'granted') await disablePushNotifications();
+    else await enablePushNotifications();
+  } catch (error) {
+    console.error(error);
+    showToast('Não foi possível alterar as notificações.');
+  } finally {
+    await updatePushUi();
+  }
+});
+
+saveRemindersButton?.addEventListener('click', () => saveReminderPreferences(true));
+
+clientFeedbackForm?.querySelectorAll('[data-feedback-rating]').forEach(button => {
+  button.addEventListener('click', () => {
+    clientFeedbackForm.dataset.rating = button.dataset.feedbackRating;
+    clientFeedbackForm.querySelectorAll('[data-feedback-rating]').forEach(item => item.classList.toggle('selected', item === button));
+    clientFeedbackForm.querySelector('[type="submit"]').disabled = false;
+  });
+});
+
+async function submitFeedbackForm(form, role, context) {
+  const rating = role === 'client' ? Number(form.dataset.rating) : Number(form.elements.rating.value);
+  if (!rating) {
+    showToast('Escolha uma nota de 1 a 5.');
+    return;
+  }
+  const button = form.querySelector('[type="submit"]');
+  const status = form.querySelector('.feedback-status');
+  button.disabled = true;
+  status.textContent = 'Enviando…';
+  const result = await sendBetaSignal({
+    kind: 'feedback',
+    role,
+    rating,
+    comment: form.elements.comment?.value || '',
+    context
+  });
+  if (result) {
+    status.textContent = 'Obrigado! Feedback registrado.';
+    form.querySelectorAll('input,select,textarea,button').forEach(control => control.disabled = true);
+  } else {
+    status.textContent = 'Não foi possível enviar agora.';
+    button.disabled = false;
+  }
+}
+
+clientFeedbackForm?.addEventListener('submit', event => {
+  event.preventDefault();
+  submitFeedbackForm(clientFeedbackForm, 'client', 'booking_confirmation');
+});
+
+ownerFeedbackForm?.addEventListener('submit', event => {
+  event.preventDefault();
+  if (!currentUser) {
+    showToast('Entre na conta para participar do beta.');
+    return;
+  }
+  submitFeedbackForm(ownerFeedbackForm, 'owner', 'owner_dashboard');
+});
+
 document.querySelector('#copy-public-link').addEventListener('click', copyPublicBookingLink);
 document.querySelector('#dashboard-copy-link').addEventListener('click', copyPublicBookingLink);
 
@@ -1888,6 +1961,8 @@ async function initialize() {
 
   initializeLocal();
   initAccount();
+  trackBetaEvent('page_view', { mode: 'owner_landing' }, 'owner');
+  updatePushUi();
 }
 
 initialize();
