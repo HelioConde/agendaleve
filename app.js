@@ -25,6 +25,8 @@ const bookingService = document.querySelector('#booking-service');
 const bookingDate = document.querySelector('#booking-date');
 const bookingTime = document.querySelector('#booking-time');
 const bookingList = document.querySelector('#booking-list');
+const bookingDateFilter = document.querySelector('#booking-date-filter');
+const bookingStatusFilter = document.querySelector('#booking-status-filter');
 const serviceList = document.querySelector('#service-list');
 const accountDialog = document.querySelector('#account-dialog');
 const accountOpenButton = document.querySelector('#account-open');
@@ -184,27 +186,70 @@ function switchView(name) {
   if (name === 'configuracao') fillSettings();
 }
 
+function bookingStatusLabel(status) {
+  return ({
+    pending: 'Pendente',
+    confirmed: 'Confirmada',
+    completed: 'Concluída',
+    cancelled: 'Cancelada'
+  })[status] || 'Reserva';
+}
+
 function renderDashboard() {
   const config = currentConfig();
   const now = new Date();
-  const bookings = currentBookings()
-    .filter(booking => booking.status !== 'cancelled')
-    .filter(booking => new Date(`${booking.date}T${booking.time}:00`) >= now)
-    .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  const today = localDateString(now);
+  const allBookings = [...currentBookings()];
+  const upcomingActive = allBookings.filter(booking => {
+    const active = booking.status === 'pending' || booking.status === 'confirmed';
+    return active && new Date(`${booking.date}T${booking.time}:00`) >= now;
+  });
+
+  const period = bookingDateFilter?.value || 'upcoming';
+  const status = bookingStatusFilter?.value || 'active';
+  let bookings = allBookings.filter(booking => {
+    const starts = new Date(`${booking.date}T${booking.time}:00`);
+    const matchesPeriod = period === 'all'
+      || (period === 'today' && booking.date === today)
+      || (period === 'upcoming' && starts >= now)
+      || (period === 'past' && starts < now);
+    const matchesStatus = status === 'all'
+      || (status === 'active' && (booking.status === 'pending' || booking.status === 'confirmed'))
+      || booking.status === status;
+    return matchesPeriod && matchesStatus;
+  });
+
+  bookings.sort((a, b) => {
+    const comparison = `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`);
+    return period === 'past' ? -comparison : comparison;
+  });
 
   document.querySelector('#business-name-card').textContent = config.businessName;
-  document.querySelector('#stat-upcoming').textContent = String(bookings.length);
+  document.querySelector('#stat-upcoming').textContent = String(upcomingActive.length);
   document.querySelector('#stat-services').textContent = String(config.services.length);
   document.querySelector('#stat-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
+  const filterCount = document.querySelector('#booking-filter-count');
+  if (filterCount) filterCount.textContent = bookings.length === 1 ? '1 agendamento neste filtro.' : `${bookings.length} agendamentos neste filtro.`;
 
   bookingList.innerHTML = bookings.length
-    ? bookings.map(booking => `
+    ? bookings.map(booking => {
+      const actions = booking.status === 'pending'
+        ? `<button class="text-button" type="button" data-booking-action="confirm" data-booking-id="${escapeHtml(booking.id)}">Confirmar</button><button class="text-button danger" type="button" data-booking-action="cancel" data-booking-id="${escapeHtml(booking.id)}">Cancelar</button>`
+        : booking.status === 'confirmed'
+          ? `<button class="text-button" type="button" data-booking-action="complete" data-booking-id="${escapeHtml(booking.id)}">Concluir</button><button class="text-button danger" type="button" data-booking-action="cancel" data-booking-id="${escapeHtml(booking.id)}">Cancelar</button>`
+          : '';
+      return `
       <article class="booking-row">
         <div class="booking-date"><strong>${formatDate(booking.date)}</strong><span>${escapeHtml(booking.time)}</span></div>
-        <div class="booking-info"><strong>${escapeHtml(booking.client)}</strong><span>${escapeHtml(booking.service)} · ${booking.duration} min</span>${booking.phone ? `<a class="booking-contact" href="https://wa.me/${booking.phone.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp ${escapeHtml(formatPhone(booking.phone))}</a>` : ''}</div>
-        <button class="text-button" type="button" data-cancel="${escapeHtml(booking.id)}">Cancelar</button>
-      </article>`).join('')
-    : '<div class="empty"><strong>Sua agenda começa aqui.</strong><span>Configure seus serviços e compartilhe seu link de reservas.</span></div>';
+        <div class="booking-info">
+          <div class="booking-title-line"><strong>${escapeHtml(booking.client)}</strong><span class="status-chip status-${escapeHtml(booking.status)}">${bookingStatusLabel(booking.status)}</span></div>
+          <span>${escapeHtml(booking.service)} · ${booking.duration} min</span>
+          ${booking.phone ? `<a class="booking-contact" href="https://wa.me/${booking.phone.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp ${escapeHtml(formatPhone(booking.phone))}</a>` : ''}
+        </div>
+        <div class="booking-actions">${actions}</div>
+      </article>`;
+    }).join('')
+    : '<div class="empty"><strong>Nenhum agendamento encontrado.</strong><span>Altere os filtros para consultar outros horários.</span></div>';
 }
 
 function fillSettings() {
@@ -918,26 +963,49 @@ document.querySelector('#newBooking').addEventListener('click', () => {
   document.querySelector('#bookingFormLayout').hidden = false;
 });
 
-bookingList.addEventListener('click', async event => {
-  const button = event.target.closest('[data-cancel]');
-  if (!button) return;
-  if (!window.confirm('Cancelar este horário?')) return;
-  const id = button.dataset.cancel;
+bookingDateFilter?.addEventListener('change', renderDashboard);
+bookingStatusFilter?.addEventListener('change', renderDashboard);
 
+bookingList.addEventListener('click', async event => {
+  const button = event.target.closest('[data-booking-action]');
+  if (!button) return;
+  const action = button.dataset.bookingAction;
+  const id = button.dataset.bookingId;
+  const nextStatus = action === 'confirm' ? 'confirmed'
+    : action === 'complete' ? 'completed'
+    : action === 'cancel' ? 'cancelled'
+    : '';
+  if (!nextStatus || !id) return;
+
+  const prompts = {
+    confirmed: 'Confirmar este agendamento?',
+    completed: 'Marcar este atendimento como concluído?',
+    cancelled: 'Cancelar este horário?'
+  };
+  if (!window.confirm(prompts[nextStatus])) return;
+
+  button.disabled = true;
   if (currentUser) {
-    const { error } = await supabaseClient.from('agendaleve_bookings').update({ status: 'cancelled' }).eq('id', id);
+    const { error } = await supabaseClient.from('agendaleve_bookings').update({ status: nextStatus }).eq('id', id);
     if (error) {
-      showToast('Não foi possível cancelar.');
+      button.disabled = false;
+      showToast('Não foi possível atualizar o agendamento.');
       return;
     }
-    activeBookings = activeBookings.map(item => item.id === id ? { ...item, status: 'cancelled' } : item);
+    activeBookings = activeBookings.map(item => item.id === id ? { ...item, status: nextStatus } : item);
   } else {
-    writeLocalBookings(readLocalBookings().filter(booking => booking.id !== id));
+    const bookings = readLocalBookings().map(item => item.id === id ? { ...item, status: nextStatus } : item);
+    writeLocalBookings(bookings);
   }
 
   renderDashboard();
   refreshAvailability();
-  showToast('Agendamento cancelado.');
+  const messages = {
+    confirmed: 'Agendamento confirmado.',
+    completed: 'Atendimento concluído.',
+    cancelled: 'Agendamento cancelado.'
+  };
+  showToast(messages[nextStatus]);
 });
 
 document.querySelector('#copy-public-link').addEventListener('click', async () => {
