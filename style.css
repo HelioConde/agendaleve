@@ -20,17 +20,17 @@ button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .5; }
 [hidden] { display: none !important; }
 .app-shell { max-width: 1120px; margin: auto; padding: 0 28px; }
-.topbar { min-height: 72px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.topbar { min-height: 66px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .brand { color: var(--ink); text-decoration: none; font: 800 20px Manrope, sans-serif; letter-spacing: -.8px; }
 .brand span { color: var(--accent); }
 .topbar-note { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
 .demo-dot { width: 7px; height: 7px; border-radius: 50%; background: #d49b43; }
-.intro { padding: 58px 0 38px; display: grid; grid-template-columns: 1.3fr .7fr; align-items: end; gap: 32px; }
+.intro { padding: 40px 0 28px; display: grid; grid-template-columns: 1.3fr .7fr; align-items: end; gap: 32px; }
 .eyebrow { margin: 0 0 12px; color: var(--accent); font-size: 10px; font-weight: 800; letter-spacing: 1.45px; }
-.intro h1 { margin: 0 0 16px; font: 800 clamp(36px, 5.6vw, 62px)/1.05 Manrope, sans-serif; letter-spacing: -3px; }
+.intro h1 { margin: 0 0 16px; font: 800 clamp(34px, 4.9vw, 56px)/1.04 Manrope, sans-serif; letter-spacing: -3px; }
 .intro h1 span { color: var(--accent); }
 .intro-copy { max-width: 580px; margin: 0; color: var(--muted); line-height: 1.65; }
-.intro-card { min-height: 150px; padding: 22px; border-radius: 18px; background: var(--soft); display: flex; flex-direction: column; justify-content: space-between; }
+.intro-card { min-height: 130px; padding: 22px; border-radius: 18px; background: var(--soft); display: flex; flex-direction: column; justify-content: space-between; }
 .intro-icon { color: var(--accent); font-size: 30px; }
 .intro-card strong { display: block; font: 700 16px Manrope, sans-serif; }
 .intro-card small { display: block; margin-top: 5px; color: var(--muted); line-height: 1.5; }
@@ -66,7 +66,7 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .text-button { padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--accent); font-size: 12px; font-weight: 700; }
 .text-button:hover { background: var(--soft-2); }
 .text-button.danger { color: #9d4c3d; }
-.booking-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(250px, .95fr); gap: 16px; }
+.booking-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .95fr); gap: 16px; align-items: start; }
 .booking-panel { max-width: 600px; }
 .business-label { margin: 0 0 5px; color: var(--muted); font-size: 12px; }
 .booking-panel h3 { font-size: 23px; }
@@ -187,3 +187,17 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .cancellation-button{color:#8c4338;background:#f8e9e6}
 .cancellation-button:hover{background:#f2ddd9}
 .cancel-back-link{display:block;width:fit-content;margin:14px auto 0;text-decoration:none}
+
+.booking-aside-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.booking-aside-head .aside-icon{margin:0;flex:none}
+.aside-eyebrow{color:var(--accent);font-size:9px;font-weight:800;letter-spacing:1.05px}
+.booking-summary-list{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 18px}
+.booking-summary-list>div{padding:11px 12px;border:1px solid #dce8de;border-radius:10px;background:#ffffff8f}
+.booking-summary-list span,.booking-summary-list strong{display:block}
+.booking-summary-list span{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.55px;font-weight:700}
+.booking-summary-list strong{margin-top:4px;font:700 12px Manrope,sans-serif}
+.booking-aside #booking-summary-date{line-height:1.35}
+.booking-aside .hours-chip{width:100%;margin-top:0}
+#view-reservas:not([hidden]),#view-configuracao:not([hidden]){padding-top:8px}
+@media(max-width:760px){.booking-summary-list{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:620px){.booking-summary-list{grid-template-columns:1fr 1fr}}
