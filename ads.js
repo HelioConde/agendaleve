@@ -2,6 +2,8 @@
   const config = window.AGENDALEVE_ADS || {};
   if (!config.enabled || !config.publisherId) return;
 
+  const publicMode = Boolean(new URLSearchParams(location.search).get('negocio'));
+  const allowedPlacement = publicMode ? 'public-footer' : 'owner-footer';
   const placements = {
     'owner-footer': config.slots?.ownerFooter,
     'public-footer': config.slots?.publicFooter
@@ -9,6 +11,7 @@
 
   const active = Array.from(document.querySelectorAll('[data-ad-placement]'))
     .filter(container => {
+      if (container.dataset.adPlacement !== allowedPlacement) return false;
       const slot = placements[container.dataset.adPlacement];
       if (!slot) return false;
 
