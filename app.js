@@ -53,6 +53,7 @@ let currentBusiness = null;
 let activeConfig = readLocalConfig();
 let activeBookings = readLocalBookings();
 let availableSlotMap = new Map();
+let managedBooking = null;
 let cloudLoading = false;
 
 function readJson(key, fallback) {
@@ -341,11 +342,14 @@ function availableTimesLocal(date, service) {
   return times;
 }
 
-async function fetchCloudAvailability(date, service) {
+async function fetchCloudAvailability(date, service, management = false) {
   if (!supabaseClient || !currentBusiness?.slug || !service?.id || !date) return [];
-  const { data, error } = await supabaseClient.functions.invoke('booking-availability', {
-    body: { businessSlug: currentBusiness.slug, serviceId: service.id, date }
-  });
+  const body = { businessSlug: currentBusiness.slug, serviceId: service.id, date };
+  if (management && customerCancelMode) {
+    body.bookingId = cancelBookingId;
+    body.cancelToken = cancelToken;
+  }
+  const { data, error } = await supabaseClient.functions.invoke('booking-availability', { body });
   if (error) throw error;
   availableSlotMap = new Map((data?.slots || []).map(slot => [slot.time, slot.startsAt]));
   return (data?.slots || []).map(slot => slot.time);
@@ -459,19 +463,119 @@ function showBookingConfirmation(booking) {
   document.querySelector('#bookingConfirmation h2').focus();
 }
 
-function showCustomerCancellationPanel() {
-  document.querySelector('#bookingFormLayout').hidden = true;
-  document.querySelector('#bookingConfirmation').hidden = true;
+function managementBackUrl() {
+  const url = new URL(location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('negocio', publicSlug);
+  return url.toString();
+}
+
+function updateManagedBookingSummary() {
+  if (!managedBooking || !currentBusiness) return;
+  const local = inBusinessZone(managedBooking.startsAt, currentBusiness.timezone);
+  const dateLabel = new Date(local.date + 'T12:00:00').toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+  document.querySelector('#manage-current-booking').textContent =
+    `${managedBooking.service.name} · ${dateLabel}, às ${local.time}`;
+}
+
+async function refreshRescheduleAvailability() {
+  const dateInput = document.querySelector('#reschedule-date');
+  const timeSelect = document.querySelector('#reschedule-time');
+  const confirmButton = document.querySelector('#confirm-reschedule');
+  const date = dateInput.value;
+  const service = managedBooking?.service;
+  timeSelect.disabled = true;
+  confirmButton.disabled = true;
+  timeSelect.innerHTML = '<option value="">Consultando horários…</option>';
+
+  if (!date || !service) {
+    timeSelect.innerHTML = '<option value="">Escolha uma data</option>';
+    return;
+  }
+
+  try {
+    const times = await fetchCloudAvailability(date, service, true);
+    timeSelect.innerHTML = times.length
+      ? '<option value="">Selecione um horário</option>' + times.map(time => `<option value="${time}">${time}</option>`).join('')
+      : '<option value="">Nenhum horário disponível</option>';
+    timeSelect.disabled = times.length === 0;
+  } catch (error) {
+    console.error(error);
+    timeSelect.innerHTML = '<option value="">Não foi possível consultar agora</option>';
+  }
+}
+
+async function loadManagedBooking() {
   const panel = document.querySelector('#cancelBookingPanel');
   panel.hidden = false;
+  document.querySelector('#bookingFormLayout').hidden = true;
+  document.querySelector('#bookingConfirmation').hidden = true;
   document.querySelector('#public-mode-name').textContent = 'Gerenciar reserva';
-  const back = document.querySelector('#backToBooking');
-  const backUrl = new URL(location.href);
-  backUrl.search = '';
-  backUrl.hash = '';
-  backUrl.searchParams.set('negocio', publicSlug);
-  back.href = backUrl.toString();
+  document.querySelector('#backToBooking').href = managementBackUrl();
   document.querySelector('#cancelBookingTitle').focus();
+
+  if (!supabaseClient) {
+    document.querySelector('#cancelBookingText').textContent = 'Não foi possível conectar ao serviço de reservas.';
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('booking-manage', {
+      body: { bookingId: cancelBookingId, cancelToken }
+    });
+    if (error) throw error;
+
+    currentBusiness = {
+      slug: data.business.slug,
+      name: data.business.name,
+      timezone: data.business.timezone,
+      slot_interval_minutes: Number(data.business.slotIntervalMinutes),
+      is_public: true
+    };
+    activeConfig = {
+      businessName: data.business.name,
+      opensAt: data.hours[0]?.opens_at?.slice(0, 5) || '08:00',
+      closesAt: data.hours[0]?.closes_at?.slice(0, 5) || '19:00',
+      slotStep: Number(data.business.slotIntervalMinutes) || 30,
+      days: (data.hours || []).map(row => Number(row.weekday)).sort((a, b) => a - b),
+      services: [{
+        id: data.service.id,
+        name: data.service.name,
+        duration: Number(data.service.duration),
+        price: Number(data.service.price)
+      }],
+      isPublic: true,
+      slug: data.business.slug
+    };
+    managedBooking = {
+      ...data.booking,
+      service: activeConfig.services[0]
+    };
+
+    document.querySelector('#public-mode-name').textContent = data.business.name;
+    document.querySelector('#cancelBookingText').textContent = 'Você pode reagendar ou cancelar este horário usando este link privado.';
+    document.querySelector('#reschedule-box').hidden = !data.service.active;
+    document.querySelector('#manage-danger-zone').hidden = false;
+    const dateInput = document.querySelector('#reschedule-date');
+    dateInput.min = localDateString(new Date());
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 180);
+    dateInput.max = localDateString(maxDate);
+    updateManagedBookingSummary();
+  } catch (error) {
+    console.error(error);
+    document.querySelector('#cancelBookingTitle').textContent = 'Reserva indisponível';
+    document.querySelector('#cancelBookingText').textContent = 'Este link pode ter expirado, a reserva pode ter sido cancelada ou o horário já passou.';
+    document.querySelector('#reschedule-box').hidden = true;
+    document.querySelector('#manage-danger-zone').hidden = true;
+  }
+}
+
+function showCustomerCancellationPanel() {
+  loadManagedBooking();
 }
 
 function cloudConfigFromRows(business, hours, services) {
@@ -1051,6 +1155,43 @@ document.querySelector('#copy-cancel-link').addEventListener('click', async even
   }
 });
 
+document.querySelector('#reschedule-date').addEventListener('change', refreshRescheduleAvailability);
+document.querySelector('#reschedule-time').addEventListener('change', event => {
+  document.querySelector('#confirm-reschedule').disabled = !event.currentTarget.value;
+});
+
+document.querySelector('#confirm-reschedule').addEventListener('click', async event => {
+  if (!supabaseClient || !customerCancelMode || !managedBooking) return;
+  const time = document.querySelector('#reschedule-time').value;
+  const startsAt = availableSlotMap.get(time);
+  if (!startsAt) {
+    showToast('Escolha um horário disponível.');
+    return;
+  }
+
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('reschedule-booking', {
+      body: { bookingId: cancelBookingId, cancelToken, startsAt }
+    });
+    if (error) throw error;
+    managedBooking.startsAt = data.startsAt;
+    managedBooking.endsAt = data.endsAt;
+    updateManagedBookingSummary();
+    document.querySelector('#reschedule-date').value = '';
+    document.querySelector('#reschedule-time').innerHTML = '<option value="">Escolha uma data</option>';
+    document.querySelector('#reschedule-time').disabled = true;
+    showToast('Reserva reagendada com sucesso.');
+  } catch (error) {
+    console.error(error);
+    await refreshRescheduleAvailability();
+    showToast('Esse horário pode ter acabado de ser reservado. Escolha outro.');
+  } finally {
+    button.disabled = true;
+  }
+});
+
 document.querySelector('#confirmCustomerCancellation').addEventListener('click', async event => {
   if (!supabaseClient || !customerCancelMode) return;
   if (!window.confirm('Cancelar definitivamente esta reserva?')) return;
@@ -1063,7 +1204,8 @@ document.querySelector('#confirmCustomerCancellation').addEventListener('click',
     if (error) throw error;
     document.querySelector('#cancelBookingTitle').textContent = 'Reserva cancelada';
     document.querySelector('#cancelBookingText').textContent = 'O horário foi liberado. Se precisar, você pode fazer um novo agendamento.';
-    button.hidden = true;
+    document.querySelector('#reschedule-box').hidden = true;
+    document.querySelector('#manage-danger-zone').hidden = true;
     document.querySelector('#backToBooking').textContent = 'Fazer novo agendamento →';
   } catch (error) {
     console.error(error);
