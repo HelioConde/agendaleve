@@ -307,6 +307,46 @@
   "Ative “Aceitar reservas pelo link público” e salve para liberar o link.": "Enable “Accept bookings through the public link” and save to enable the link.",
   "Sua agenda está pronta para receber reservas pelo link público.": "Your schedule is ready to receive bookings through the public link."
 };
+  Object.assign(translations, {
+  "Sincronizando…": "Syncing…",
+  "Reserva online": "Online booking",
+  "Conta criada e conectada.": "Account created and connected.",
+  "Conta criada. Confirme o e-mail e depois entre.": "Account created. Confirm your email, then sign in.",
+  "Notificações bloqueadas nas permissões do navegador.": "Notifications are blocked in your browser permissions.",
+  "Ative o push para receber os lembretes selecionados.": "Enable push notifications to receive the selected reminders.",
+  "Sua agenda ainda está vazia.": "Your schedule is still empty.",
+  "Nenhum agendamento neste filtro.": "No bookings match this filter.",
+  "Tente outro período ou status.": "Try another period or status.",
+  "Crie um atendimento manualmente ou publique seu link para receber a primeira reserva.": "Create a booking manually or publish your link to receive your first booking.",
+  "Adicione ao menos um serviço para receber reservas.": "Add at least one service to receive bookings.",
+  "Confirmar": "Confirm",
+  "Cancelar": "Cancel",
+  "Concluir": "Complete",
+  "Remover": "Remove",
+  "Editar": "Edit",
+  "Data": "Date",
+  "Hora": "Time",
+  "Cliente": "Client",
+  "Telefone": "Phone",
+  "Duração (min)": "Duration (min)",
+  "Atendimento inicial": "Initial service",
+  "Horários por dia": "Hours vary by day",
+  "Nota 1": "Rating 1",
+  "Nota 2": "Rating 2",
+  "Nota 3": "Rating 3",
+  "Nota 4": "Rating 4",
+  "Nota 5": "Rating 5",
+  "Sem atendimento:": "Closed:",
+  "Agendamento confirmado.": "Booking confirmed.",
+  "Atendimento concluído.": "Appointment completed.",
+  "Marcado como não compareceu.": "Marked as no-show.",
+  "Agendamento cancelado.": "Booking canceled.",
+  "Informações salvas neste dispositivo.": "Details saved on this device.",
+  "Configurações sincronizadas.": "Settings synced.",
+  "Serviço removido.": "Service removed.",
+  "Não foi possível enviar agora.": "Could not send right now.",
+  "Obrigado! Feedback registrado.": "Thank you! Feedback submitted."
+});
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));
   let activeLocale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'pt-BR';
   let applying = false;
@@ -322,6 +362,8 @@
       if(m) return `${m[1]} ratings`;
       m=value.match(/^Sem atendimento: (.+)$/);
       if(m) return `Closed: ${m[1]}`;
+      m=value.match(/^Remover (.+)$/);
+      if(m) return `Remove ${m[1]}`;
       m=value.match(/^Nuvem · (.+)$/);
       if(m) return `Cloud · ${m[1]}`;
       return value;
@@ -335,6 +377,8 @@
     if(m) return `${m[1]} avaliações`;
     m=value.match(/^Closed: (.+)$/);
     if(m) return `Sem atendimento: ${m[1]}`;
+    m=value.match(/^Remove (.+)$/);
+    if(m) return `Remover ${m[1]}`;
     m=value.match(/^Cloud · (.+)$/);
     if(m) return `Nuvem · ${m[1]}`;
     return value;
