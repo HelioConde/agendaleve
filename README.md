@@ -8,6 +8,7 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - Supabase Auth;
 - negócio, expediente por dia da semana, serviços e reservas persistidos no `pizzaria-db`;
 - link público por `?negocio=slug`;
+- branding da página pública por cor personalizada, com preview no painel;
 - experiência separada entre painel do negócio e página do cliente;
 - resumo vivo da reserva com serviço, duração, preço, data e horário;
 - disponibilidade em tempo real;
@@ -45,7 +46,7 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 ## Backend
 
 Tabelas:
-- `agendaleve_businesses`
+- `agendaleve_businesses` (inclui `brand_color` para personalização da página pública)
 - `agendaleve_business_hours`
 - `agendaleve_services`
 - `agendaleve_bookings`
