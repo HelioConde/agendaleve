@@ -347,6 +347,19 @@
   "Não foi possível enviar agora.": "Could not send right now.",
   "Obrigado! Feedback registrado.": "Thank you! Feedback submitted."
 });
+  Object.assign(translations, {
+  "Notificação de teste enviada.": "Test notification sent.",
+  "Teste concluído.": "Test completed.",
+  "Notificações ativadas. Você receberá lembretes dos próximos atendimentos.": "Notifications enabled. You will receive reminders for upcoming appointments.",
+  "1 avaliação": "1 rating",
+  "1 agendamento neste filtro.": "1 booking in this filter.",
+  "Reserva online": "Online booking",
+  "Conta criada e conectada.": "Account created and connected.",
+  "Conta criada. Confirme o e-mail e depois entre.": "Account created. Confirm your email, then sign in.",
+  "Remover": "Remove",
+  "Cancelar": "Cancel",
+  "Concluir": "Complete"
+});
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));
   let activeLocale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'pt-BR';
   let applying = false;
