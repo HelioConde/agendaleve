@@ -14,7 +14,7 @@ Existing tables:
 The module already uses RLS and booking-specific database constraints.
 
 ## Production path
-Connect the current UI to Supabase Auth and the existing schema, keep booking creation server-validated, add reminder jobs and isolate business ownership by authenticated user.
+The current UI is connected to Supabase Auth and the existing schema. Public booking creation remains server-validated, owner data is isolated by RLS, and each reservation can store a private WhatsApp/phone contact. Next production steps are reminder jobs, customer self-service cancellation and abuse protection (CAPTCHA/Turnstile).
 
 ## QA gates
 Double-booking, timezone handling, overlapping services, cancellation rules, rate limiting, mobile booking flow and cross-account isolation are release blockers.
