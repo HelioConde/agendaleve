@@ -28,6 +28,11 @@ jobs:
           test -f package.json
           test -f playwright.config.js
           test -f tests/e2e.spec.js
+          test -f sw.js
+          test -f VALIDACAO_BETA.md
+          test -f supabase/functions/reminder-dispatch/index.ts
+          test -f supabase/functions/beta-signal/index.ts
+          test -f supabase/migrations/20261006083000_push_reminders_beta.sql
           test -f .github/workflows/e2e.yml
           test -f supabase/functions/create-booking/index.ts
           test -f supabase/functions/booking-availability/index.ts
@@ -79,3 +84,10 @@ jobs:
           grep -qi 'weekly-hours' index.html
           grep -qi 'hoursByDay' app.js
           grep -qi 'hoursForDay' app.js
+          grep -qi 'pushVapidPublicKey' supabase-config.js
+          grep -qi 'serviceWorker' app.js
+          grep -qi 'beta-signal' app.js
+          grep -qi 'turnstileToken' app.js
+          grep -qi 'turnstile_secret' supabase/functions/create-booking/index.ts
+          grep -qi 'web-push' supabase/functions/reminder-dispatch/index.ts
+          grep -qi 'notificationclick' sw.js
