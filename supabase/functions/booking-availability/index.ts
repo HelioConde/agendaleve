@@ -23,6 +23,11 @@ function json(status: number, body: Record<string, unknown>, origin: string | nu
   });
 }
 
+async function hashText(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function getSecretKey() {
   const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (secretKeys) {
@@ -102,11 +107,18 @@ Deno.serve(async (request: Request) => {
   const businessSlug = typeof input.businessSlug === "string" ? input.businessSlug.trim().toLowerCase() : "";
   const serviceId = typeof input.serviceId === "string" ? input.serviceId : "";
   const date = typeof input.date === "string" ? input.date : "";
+  const manageBookingId = typeof input.bookingId === "string" ? input.bookingId.trim() : "";
+  const manageToken = typeof input.cancelToken === "string" ? input.cancelToken.trim() : "";
+  const manageMode = Boolean(manageBookingId || manageToken);
 
   if (
     !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(businessSlug) ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(serviceId) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+    (manageMode && (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(manageBookingId) ||
+      !/^[A-Za-z0-9_-]{32}$/.test(manageToken)
+    ))
   ) {
     return json(400, { error: "Confira os dados." }, origin);
   }
@@ -132,11 +144,30 @@ Deno.serve(async (request: Request) => {
     .from("agendaleve_businesses")
     .select("id, slug, name, timezone, slot_interval_minutes, is_public")
     .eq("slug", businessSlug)
-    .eq("is_public", true)
     .maybeSingle();
 
   if (businessError) return json(503, { error: "Não foi possível consultar a agenda." }, origin);
   if (!business) return json(404, { error: "Negócio indisponível." }, origin);
+
+  let excludedBookingId = "";
+  if (manageMode) {
+    const { data: managed, error: managedError } = await client
+      .from("agendaleve_bookings")
+      .select("id,business_id,service_id")
+      .eq("id", manageBookingId)
+      .eq("cancel_token_hash", await hashText(manageToken))
+      .eq("business_id", business.id)
+      .eq("service_id", serviceId)
+      .in("status", ["pending", "confirmed"])
+      .gt("starts_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (managedError) return json(503, { error: "Não foi possível validar a reserva." }, origin);
+    if (!managed) return json(403, { error: "Link de gerenciamento inválido." }, origin);
+    excludedBookingId = managed.id;
+  } else if (!business.is_public) {
+    return json(404, { error: "Negócio indisponível." }, origin);
+  }
 
   const { data: service, error: serviceError } = await client
     .from("agendaleve_services")
@@ -163,13 +194,16 @@ Deno.serve(async (request: Request) => {
   const dayStart = zonedLocalToUtcIso(date, "00:00", business.timezone);
   const dayEnd = zonedLocalToUtcIso(addDays(date, 1), "00:00", business.timezone);
 
-  const { data: bookings, error: bookingsError } = await client
+  let bookingQuery = client
     .from("agendaleve_bookings")
-    .select("starts_at, ends_at")
+    .select("id, starts_at, ends_at")
     .eq("business_id", business.id)
     .in("status", ["pending", "confirmed"])
     .lt("starts_at", dayEnd)
     .gt("ends_at", dayStart);
+
+  if (excludedBookingId) bookingQuery = bookingQuery.neq("id", excludedBookingId);
+  const { data: bookings, error: bookingsError } = await bookingQuery;
 
   if (bookingsError) return json(503, { error: "Não foi possível consultar os horários ocupados." }, origin);
 
