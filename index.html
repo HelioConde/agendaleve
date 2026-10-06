@@ -305,6 +305,20 @@
         </div>
 
         <div class="settings-secondary-grid">
+          <section class="panel time-off-panel">
+            <div class="panel-heading inline-panel-heading">
+              <div><h3>Bloqueios, folgas e férias</h3><p>Feche períodos inteiros sem alterar seu expediente semanal.</p></div>
+            </div>
+            <form id="time-off-form" class="time-off-form">
+              <div class="field-row">
+                <label class="field"><span>Início</span><input name="startsOn" type="date" required></label>
+                <label class="field"><span>Fim</span><input name="endsOn" type="date" required></label>
+              </div>
+              <label class="field"><span>Motivo (opcional)</span><input name="label" maxlength="80" placeholder="Ex.: Férias"></label>
+              <button class="secondary" type="submit">Adicionar bloqueio</button>
+            </form>
+            <div id="time-off-list" class="time-off-list"></div>
+          </section>
           <section class="panel notification-panel" id="notification-panel">
             <div class="panel-heading inline-panel-heading">
               <div><h3>Lembretes e notificações</h3><p>Receba um push antes dos próximos atendimentos.</p></div>
