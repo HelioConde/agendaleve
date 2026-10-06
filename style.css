@@ -496,3 +496,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
   }
   .primary:hover{transform:none}
 }
+
+.agenda-tools{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.agenda-search{min-width:220px!important;flex:1}
+.agenda-search input{width:100%;min-height:36px;padding:7px 10px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink);font-size:11px}
+.agenda-search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(31,106,74,.11);outline:0}
+.agenda-export{margin-bottom:0}
+.service-actions{display:flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.service-form-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.status-no_show{background:#eee8f5;color:#634a78}
+@media(max-width:760px){.agenda-tools{width:100%;justify-content:stretch}.agenda-search{min-width:100%!important}.agenda-export{width:100%}}
