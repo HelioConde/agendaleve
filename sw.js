@@ -1,5 +1,5 @@
-const CACHE_NAME = 'agendaleve-shell-v1';
-const APP_SHELL = ['./', './index.html', './style.css', './app.js', './supabase-config.js', './ads-config.js', './ads.js', './manifest.webmanifest', './icon.svg'];
+const CACHE_NAME = 'agendaleve-shell-v2';
+const APP_SHELL = ['./', './index.html', './style.css', './i18n.js', './app.js', './supabase-config.js', './ads-config.js', './ads.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
