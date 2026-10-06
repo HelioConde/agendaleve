@@ -138,6 +138,7 @@
               <label class="field"><span>Horário disponível</span><select id="booking-time" name="time" required></select></label>
               <label class="field"><span>Seu nome</span><input name="client" type="text" maxlength="80" placeholder="Ex.: Marina Souza" autocomplete="name" required></label>
               <label class="field"><span>WhatsApp / telefone</span><input name="phone" type="tel" inputmode="tel" maxlength="20" placeholder="Ex.: (11) 99999-9999" autocomplete="tel" required><small class="field-help">Usado somente pelo estabelecimento para falar sobre esta reserva.</small></label>
+              <div id="turnstile-container" class="turnstile-slot" hidden aria-label="Proteção anti-bot"></div>
               <button class="primary" type="submit">Confirmar reserva</button>
               <p class="form-footnote" id="booking-mode-note">No modo local, a reserva fica somente neste navegador.</p>
             </form>
@@ -179,6 +180,20 @@
               <a class="secondary" id="cancel-reservation-link" href="#">Gerenciar reserva</a>
             </div>
           </div>
+          <form id="client-feedback-form" class="beta-feedback beta-feedback-client">
+            <strong>Como foi fazer a reserva?</strong>
+            <p>Uma nota rápida ajuda a melhorar o AgendaLeve.</p>
+            <div class="rating-row" role="group" aria-label="Nota da experiência">
+              <button type="button" data-feedback-rating="1" aria-label="Nota 1">1</button>
+              <button type="button" data-feedback-rating="2" aria-label="Nota 2">2</button>
+              <button type="button" data-feedback-rating="3" aria-label="Nota 3">3</button>
+              <button type="button" data-feedback-rating="4" aria-label="Nota 4">4</button>
+              <button type="button" data-feedback-rating="5" aria-label="Nota 5">5</button>
+            </div>
+            <textarea name="comment" maxlength="500" rows="2" placeholder="Comentário opcional"></textarea>
+            <button class="secondary compact" type="submit" disabled>Enviar feedback</button>
+            <span class="feedback-status" role="status"></span>
+          </form>
           <button class="text-button" id="newBooking" type="button">Fazer outro agendamento →</button>
         </section>
         <section class="booking-confirmation panel manage-booking-panel" id="cancelBookingPanel" hidden aria-live="polite">
@@ -254,6 +269,40 @@
               </div>
             </form>
             <div class="service-list" id="service-list"></div>
+          </section>
+        </div>
+
+        <div class="settings-secondary-grid">
+          <section class="panel notification-panel" id="notification-panel">
+            <div class="panel-heading inline-panel-heading">
+              <div><h3>Lembretes e notificações</h3><p>Receba um push antes dos próximos atendimentos.</p></div>
+              <span class="feature-badge">Beta</span>
+            </div>
+            <p class="sub">As notificações são opcionais e ficam vinculadas à sua conta neste navegador.</p>
+            <div class="reminder-options" aria-label="Antecedência dos lembretes">
+              <label><input id="reminder-24h" type="checkbox" checked><span><strong>24 horas antes</strong><small>Bom para se preparar para o dia seguinte.</small></span></label>
+              <label><input id="reminder-2h" type="checkbox" checked><span><strong>2 horas antes</strong><small>Último aviso antes do atendimento.</small></span></label>
+            </div>
+            <div class="notification-actions">
+              <button class="primary compact" id="push-toggle" type="button">Ativar notificações</button>
+              <button class="secondary compact" id="save-reminders" type="button">Salvar lembretes</button>
+            </div>
+            <p class="notification-status" id="push-status" role="status">Entre na sua conta para ativar o push.</p>
+          </section>
+
+          <section class="panel beta-owner-panel">
+            <div class="panel-heading inline-panel-heading">
+              <div><h3>Programa beta</h3><p>Validação com uso real, sem coletar dados do cliente.</p></div>
+              <span class="feature-badge neutral">Feedback</span>
+            </div>
+            <form id="owner-feedback-form" class="beta-feedback">
+              <label class="field"><span>De 1 a 5, como está sendo usar o AgendaLeve?</span>
+                <select name="rating" required><option value="">Escolha uma nota</option><option value="1">1 — ruim</option><option value="2">2</option><option value="3">3 — razoável</option><option value="4">4</option><option value="5">5 — ótimo</option></select>
+              </label>
+              <label class="field"><span>O que mais te atrapalhou ou ajudou?</span><textarea name="comment" maxlength="1000" rows="3" placeholder="Comentário opcional"></textarea></label>
+              <button class="secondary compact" type="submit">Enviar feedback beta</button>
+              <span class="feedback-status" role="status"></span>
+            </form>
           </section>
         </div>
       </section>
