@@ -54,6 +54,7 @@ jobs:
           test -f supabase/migrations/20261006050000_customer_cancellation.sql
           test -f supabase/migrations/20261006070000_customer_reschedule.sql
           test -f supabase/migrations/20261006074500_booking_no_show_status.sql
+          test -f supabase/migrations/20261006093000_agendaleve_brand_color.sql
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
