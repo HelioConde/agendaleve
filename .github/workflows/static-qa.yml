@@ -15,10 +15,23 @@ jobs:
         with:
           node-version: 22
       - name: Validate JavaScript syntax
-        run: node --check app.js
+        run: |
+          node --check app.js
+          node --check supabase-config.js
       - name: Check required files
-        run: test -f index.html && test -f style.css && test -f README.md
-      - name: Check basic HTML metadata
+        run: |
+          test -f index.html
+          test -f style.css
+          test -f README.md
+          test -f FULLSTACK.md
+          test -f supabase/functions/create-booking/index.ts
+          test -f supabase/functions/booking-availability/index.ts
+          test -f supabase/migrations/20261006024500_data_api_grants_and_indexes.sql
+          test -f supabase/migrations/20261006025000_public_authenticated_rls.sql
+      - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
           grep -qi 'meta name="viewport"' index.html
+          grep -qi 'meta name="description"' index.html
+          grep -qi 'rel="canonical"' index.html
+          grep -qi 'supabase-config.js' index.html
