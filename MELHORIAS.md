@@ -4,6 +4,14 @@ Atualizado em 2026-10-06.
 
 Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 
+## Encerramento da etapa atual
+
+**Status: MVP técnico concluído / publicado / pronto para validação real.**
+
+O desenvolvimento principal fica encerrado nesta etapa. As pendências que exigem credenciais externas, celulares reais ou usuários reais estão centralizadas na [issue #1](https://github.com/HelioConde/agendaleve/issues/1).
+
+**Regra de retomada:** só puxar novos itens P2 se a validação real indicar necessidade, aparecer bug crítico ou houver decisão explícita de reabrir o escopo.
+
 ## P0 — aplicado
 
 - [x] Corrigir o resumo de data da reserva: a função era assíncrona sem necessidade e podia renderizar `[object Promise]`.
