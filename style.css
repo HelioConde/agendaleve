@@ -595,3 +595,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
   .ads-support{grid-template-columns:1fr;gap:14px}
   .ad-placement{min-height:90px}
 }
+
+.language-switcher{display:inline-flex;align-items:center;padding:3px;border:1px solid var(--line);border-radius:999px;background:#fff}
+.language-switcher button{min-width:34px;height:28px;padding:0 8px;border:0;border-radius:999px;background:transparent;color:var(--muted);font:800 10px/1 Inter,system-ui,sans-serif;letter-spacing:.35px;cursor:pointer}
+.language-switcher button:hover{color:var(--ink)}
+.language-switcher button.active{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgb(31 106 74 / 18%)}
+.language-switcher button:focus-visible{outline:3px solid rgb(31 106 74 / 24%);outline-offset:2px}
+html[lang="en"] .intro h1{max-width:760px}
+html[lang="en"] .tabs .tab{white-space:normal}
+@media(max-width:720px){.topbar-actions{gap:7px}.language-switcher button{min-width:31px;padding:0 6px}.topbar-note{display:none}}
