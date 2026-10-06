@@ -22,8 +22,8 @@ function json(status: number, body: Record<string, unknown>) {
   });
 }
 
-function localTimeLabel(iso: string, timeZone: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
+function localTimeLabel(iso: string, timeZone: string, locale: "pt-BR" | "en") {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "pt-BR", {
     timeZone,
     weekday: "short",
     day: "2-digit",
@@ -84,6 +84,13 @@ Deno.serve(async (request: Request) => {
   const businessMap = new Map((businesses || []).map(item => [item.id, item]));
   const ownerIds = [...new Set((businesses || []).map(item => item.owner_id))];
 
+  const ownerLocales = new Map<string, "pt-BR" | "en">();
+  await Promise.all(ownerIds.map(async ownerId => {
+    const { data } = await client.auth.admin.getUserById(ownerId);
+    const locale = data?.user?.user_metadata?.agendaleve_language === "en" ? "en" : "pt-BR";
+    ownerLocales.set(ownerId, locale);
+  }));
+
   const [{ data: preferences }, { data: subscriptions }] = await Promise.all([
     client.from("agendaleve_reminder_preferences")
       .select("owner_id,enabled,push_enabled,reminder_minutes")
@@ -135,10 +142,13 @@ Deno.serve(async (request: Request) => {
       if (deliveryError?.code === "23505") continue;
       if (deliveryError || !delivery) continue;
 
-      const lead = Number(reminderMinutes) === 1440 ? "Amanhã" : "Em 2 horas";
+      const locale = ownerLocales.get(business.owner_id) || "pt-BR";
+      const lead = Number(reminderMinutes) === 1440
+        ? (locale === "en" ? "Tomorrow" : "Amanhã")
+        : (locale === "en" ? "In 2 hours" : "Em 2 horas");
       const payload = JSON.stringify({
         title: `${lead}: ${booking.service_name}`,
-        body: `${booking.client_name} · ${localTimeLabel(booking.starts_at, business.timezone || "America/Sao_Paulo")}`,
+        body: `${booking.client_name} · ${localTimeLabel(booking.starts_at, business.timezone || "America/Sao_Paulo", locale)}`,
         url: "https://helioconde.github.io/agendaleve/",
         tag: `agendaleve-${booking.id}-${reminderMinutes}`,
       });
