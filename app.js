@@ -389,7 +389,9 @@ async function enablePushNotifications() {
   if (error) throw error;
   await saveReminderPreferences(false);
   await registration.showNotification('AgendaLeve', {
-    body: 'Notificações ativadas. Você receberá lembretes dos próximos atendimentos.',
+    body: currentLocale() === 'en'
+      ? 'Notifications enabled. You will receive reminders for upcoming appointments.'
+      : 'Notificações ativadas. Você receberá lembretes dos próximos atendimentos.',
     tag: 'agendaleve-push-enabled'
   });
   await trackBetaEvent('push_enabled', { permission: 'granted' }, 'owner');
@@ -438,10 +440,14 @@ async function loadBetaSummary() {
     startedEl.textContent = String(data?.started ?? 0);
     completedEl.textContent = String(data?.completed ?? 0);
     conversionEl.textContent = `${Number(data?.conversion || 0).toLocaleString(currentLocale())}%`;
-    ratingEl.textContent = data?.averageRating == null ? '—' : String(data.averageRating).replace('.', ',');
+    ratingEl.textContent = data?.averageRating == null
+      ? '—'
+      : Number(data.averageRating).toLocaleString(currentLocale(), { maximumFractionDigits: 1 });
     ratingCountEl.textContent = data?.feedbackCount
-      ? `${data.feedbackCount} avaliação${data.feedbackCount === 1 ? '' : 'ões'}`
-      : 'sem avaliações';
+      ? (currentLocale() === 'en'
+          ? `${data.feedbackCount} rating${data.feedbackCount === 1 ? '' : 's'}`
+          : `${data.feedbackCount} avaliação${data.feedbackCount === 1 ? '' : 'ões'}`)
+      : uiText('sem avaliações');
   } catch (error) {
     console.warn('Resumo beta indisponível:', error?.message || error);
   }
@@ -1914,7 +1920,7 @@ function exportBookingsCsv() {
       formatPhone(booking.phone),
       booking.service,
       booking.duration,
-      Number(booking.price || 0).toFixed(2).replace('.', ','),
+      Number(booking.price || 0).toLocaleString(currentLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       bookingStatusLabel(booking.status)
     ])
   ];
