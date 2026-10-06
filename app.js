@@ -2078,6 +2078,8 @@ window.addEventListener('app-language-change', () => {
   renderAll();
   updateAccountUi();
   updateBookingSummary();
+  updatePushUi();
+  loadBetaSummary();
   if (managedBooking) updateManagedBookingSummary();
 });
 
