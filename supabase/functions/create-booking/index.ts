@@ -35,12 +35,20 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return json(405, { error: "Método não permitido." }, origin);
   if (origin && !allowedOrigins.has(origin)) return json(403, { error: "Origem não permitida." }, origin);
 
-  const contentLength = Number(request.headers.get("content-length") || "0");
-  if (contentLength > 4096) return json(413, { error: "Pedido muito grande." }, origin);
+  let rawBody: string;
+  try {
+    rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).length > 4096) {
+      return json(413, { error: "Pedido muito grande." }, origin);
+    }
+  } catch {
+    return json(400, { error: "Pedido inválido." }, origin);
+  }
 
   let input: Record<string, unknown>;
   try {
-    input = await request.json();
+    input = JSON.parse(rawBody);
+    if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid body");
   } catch {
     return json(400, { error: "Pedido inválido." }, origin);
   }
