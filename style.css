@@ -438,3 +438,61 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{
   .tab.active{box-shadow:none}
   .intro-card{box-shadow:0 12px 30px rgba(22,75,54,.14)}
 }
+
+
+/* Product UX improvements */
+.view-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.setup-card{
+  display:grid;
+  grid-template-columns:minmax(220px,.9fr) minmax(0,1.5fr) auto;
+  align-items:center;
+  gap:22px;
+  margin:0 0 16px;
+  padding:18px 20px;
+  border:1px solid #d7e2da;
+  border-radius:15px;
+  background:linear-gradient(135deg,#f9fbf8,#eef4ef 72%,#f3eee5);
+  box-shadow:var(--shadow-sm);
+}
+.setup-copy .eyebrow{margin-bottom:5px}
+.setup-copy h3{margin:0;font:750 16px Manrope,sans-serif;letter-spacing:-.3px}
+.setup-copy p:last-child{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
+.setup-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0;padding:0;list-style:none}
+.setup-steps li{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(31,106,74,.1);border-radius:10px;background:rgba(255,255,255,.68)}
+.setup-check{display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;border-radius:50%;background:#e3e9e5;color:#647269;font-size:10px;font-weight:800}
+.setup-steps strong,.setup-steps small{display:block}
+.setup-steps strong{font-size:10px}
+.setup-steps small{margin-top:2px;color:var(--muted);font-size:9px;line-height:1.35}
+.setup-steps li.done{border-color:#bdd5c5;background:#f7fbf8}
+.setup-steps li.done .setup-check{background:var(--accent);color:white}
+.empty-with-action{align-items:flex-start}
+.empty-with-action .secondary{margin-top:7px}
+@media(max-width:880px){
+  .setup-card{grid-template-columns:1fr;gap:14px}
+  .setup-steps{grid-template-columns:repeat(3,1fr)}
+  .setup-card>.secondary{width:fit-content}
+}
+@media(max-width:620px){
+  .view-actions{width:100%;justify-content:stretch}
+  .view-actions>*{flex:1}
+  .setup-steps{grid-template-columns:1fr}
+  .tabs{
+    position:sticky;
+    top:0;
+    z-index:3;
+    overflow-x:auto;
+    scrollbar-width:none;
+    box-shadow:0 8px 24px rgba(23,36,29,.08);
+  }
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    scroll-behavior:auto!important;
+    transition-duration:.001ms!important;
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+  }
+  .primary:hover{transform:none}
+}
