@@ -17,10 +17,12 @@ jobs:
       - name: Validate JavaScript syntax
         run: |
           node --check app.js
+          node --check i18n.js
           node --check supabase-config.js
       - name: Check required files
         run: |
           test -f index.html
+          test -f i18n.js
           test -f style.css
           test -f README.md
           test -f FULLSTACK.md
@@ -57,6 +59,9 @@ jobs:
           grep -qi '<title' index.html
           grep -qi 'meta name="viewport"' index.html
           grep -qi 'meta name="description"' index.html
+          grep -qi 'data-language="pt-BR"' index.html
+          grep -qi 'data-language="en"' index.html
+          grep -qi 'i18n.js' index.html
           grep -qi 'rel="canonical"' index.html
           grep -qi 'supabase-config.js' index.html
           grep -qi 'name="phone"' index.html
