@@ -15,6 +15,7 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - filtros da agenda por período e status;
 - busca da agenda por cliente, telefone ou serviço;
 - exportação da agenda em CSV;
+- relatório operacional dos últimos 30 dias com comparecimento, faltas, cancelamentos e receita estimada;
 - ações rápidas para confirmar, concluir, marcar não comparecimento e cancelar atendimentos;
 - edição de serviços existentes sem precisar recriar;
 - cancelamento seguro pelo cliente através de link privado com token;
