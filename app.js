@@ -59,6 +59,8 @@ const bookingSummaryHelp = document.querySelector('#booking-summary-help');
 const pushToggleButton = document.querySelector('#push-toggle');
 const pushStatus = document.querySelector('#push-status');
 const saveRemindersButton = document.querySelector('#save-reminders');
+const pushTestButton = document.querySelector('#push-test');
+const installAppButton = document.querySelector('#install-app');
 const reminder24h = document.querySelector('#reminder-24h');
 const reminder2h = document.querySelector('#reminder-2h');
 const clientFeedbackForm = document.querySelector('#client-feedback-form');
@@ -77,6 +79,7 @@ let turnstileToken = '';
 let turnstileWidgetId = null;
 let turnstileScriptPromise = null;
 let bookingStartedTracked = false;
+let deferredInstallPrompt = null;
 
 const betaSessionId = (() => {
   const key = 'agendaleve-beta-session';
@@ -266,6 +269,7 @@ async function updatePushUi() {
   if (!currentUser) {
     pushToggleButton.disabled = true;
     saveRemindersButton.disabled = true;
+    if (pushTestButton) pushTestButton.disabled = true;
     pushToggleButton.textContent = 'Ativar notificações';
     pushStatus.textContent = 'Entre na sua conta para ativar o push.';
     return;
@@ -273,6 +277,7 @@ async function updatePushUi() {
   if (!pushIsSupported()) {
     pushToggleButton.disabled = true;
     saveRemindersButton.disabled = false;
+    if (pushTestButton) pushTestButton.disabled = true;
     pushStatus.textContent = 'Este navegador não oferece notificações push.';
     return;
   }
@@ -281,8 +286,10 @@ async function updatePushUi() {
   const subscription = await getCurrentPushSubscription();
   if (subscription && Notification.permission === 'granted') {
     pushToggleButton.textContent = 'Desativar notificações';
+    if (pushTestButton) pushTestButton.disabled = false;
     pushStatus.textContent = 'Push ativo neste navegador.';
   } else {
+    if (pushTestButton) pushTestButton.disabled = true;
     pushToggleButton.textContent = 'Ativar notificações';
     pushStatus.textContent = Notification.permission === 'denied'
       ? 'Notificações bloqueadas nas permissões do navegador.'
@@ -380,6 +387,56 @@ async function enablePushNotifications() {
   await trackBetaEvent('push_enabled', { permission: 'granted' }, 'owner');
   await updatePushUi();
   showToast('Notificações ativadas.');
+}
+
+async function testPushNotification() {
+  if (!currentUser || !supabaseClient) {
+    showToast('Entre na conta primeiro.');
+    return;
+  }
+  if (pushTestButton) pushTestButton.disabled = true;
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('push-test', { body: {} });
+    if (error) throw error;
+    showToast(data?.sent ? 'Notificação de teste enviada.' : 'Teste concluído.');
+  } catch (error) {
+    console.error(error);
+    showToast('Não foi possível enviar o teste. Ative o push neste navegador.');
+  } finally {
+    await updatePushUi();
+  }
+}
+
+async function loadBetaSummary() {
+  const startedEl = document.querySelector('#beta-started');
+  const completedEl = document.querySelector('#beta-completed');
+  const conversionEl = document.querySelector('#beta-conversion');
+  const ratingEl = document.querySelector('#beta-rating');
+  const ratingCountEl = document.querySelector('#beta-rating-count');
+  if (!startedEl || !completedEl || !conversionEl || !ratingEl || !ratingCountEl) return;
+
+  if (!currentUser || !supabaseClient || !currentBusiness) {
+    startedEl.textContent = '0';
+    completedEl.textContent = '0';
+    conversionEl.textContent = '0%';
+    ratingEl.textContent = '—';
+    ratingCountEl.textContent = 'sem avaliações';
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('beta-summary', { body: {} });
+    if (error) throw error;
+    startedEl.textContent = String(data?.started ?? 0);
+    completedEl.textContent = String(data?.completed ?? 0);
+    conversionEl.textContent = `${Number(data?.conversion || 0).toLocaleString('pt-BR')}%`;
+    ratingEl.textContent = data?.averageRating == null ? '—' : String(data.averageRating).replace('.', ',');
+    ratingCountEl.textContent = data?.feedbackCount
+      ? `${data.feedbackCount} avaliação${data.feedbackCount === 1 ? '' : 'ões'}`
+      : 'sem avaliações';
+  } catch (error) {
+    console.warn('Resumo beta indisponível:', error?.message || error);
+  }
 }
 
 async function disablePushNotifications() {
@@ -1086,6 +1143,7 @@ async function loadOwnerCloud() {
     updateAccountUi();
     await loadReminderPreferences();
     await updatePushUi();
+    await loadBetaSummary();
     trackBetaEvent('owner_dashboard_view', { hasBusiness: false }, 'owner');
     return;
   }
@@ -1108,6 +1166,7 @@ async function loadOwnerCloud() {
   updateAccountUi();
   await loadReminderPreferences();
   await updatePushUi();
+  await loadBetaSummary();
   trackBetaEvent('owner_dashboard_view', { hasBusiness: true }, 'owner');
 }
 
@@ -1874,6 +1933,35 @@ pushToggleButton?.addEventListener('click', async () => {
 });
 
 saveRemindersButton?.addEventListener('click', () => saveReminderPreferences(true));
+pushTestButton?.addEventListener('click', testPushNotification);
+
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installAppButton) installAppButton.hidden = false;
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (installAppButton) installAppButton.hidden = true;
+  showToast('AgendaLeve instalado.');
+});
+
+installAppButton?.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) {
+    showToast('Use a opção “Instalar aplicativo” do navegador, se disponível.');
+    return;
+  }
+  installAppButton.disabled = true;
+  try {
+    await deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+  } finally {
+    deferredInstallPrompt = null;
+    installAppButton.hidden = true;
+    installAppButton.disabled = false;
+  }
+});
 
 clientFeedbackForm?.querySelectorAll('[data-feedback-rating]').forEach(button => {
   button.addEventListener('click', () => {
@@ -1903,6 +1991,7 @@ async function submitFeedbackForm(form, role, context) {
   if (result) {
     status.textContent = 'Obrigado! Feedback registrado.';
     form.querySelectorAll('input,select,textarea,button').forEach(control => control.disabled = true);
+    if (role === 'client' || role === 'owner') loadBetaSummary();
   } else {
     status.textContent = 'Não foi possível enviar agora.';
     button.disabled = false;
