@@ -32,6 +32,9 @@ jobs:
           test -f VALIDACAO_BETA.md
           test -f manifest.webmanifest
           test -f icon.svg
+          test -f ads-config.js
+          test -f ads.js
+          test -f ADS_SETUP.md
           test -f supabase/functions/beta-summary/index.ts
           test -f supabase/functions/push-test/index.ts
           test -f supabase/functions/reminder-dispatch/index.ts
@@ -100,3 +103,10 @@ jobs:
           grep -qi 'beta-summary' app.js
           grep -qi 'push-test' app.js
           grep -qi 'agendaleve-shell-v1' sw.js
+          grep -qi 'ads-section' index.html
+          grep -qi 'data-ad-placement="owner-footer"' index.html
+          grep -qi 'data-ad-placement="public-footer"' index.html
+          grep -qi 'AGENDALEVE_ADS' ads-config.js
+          grep -qi 'pagead2.googlesyndication.com' ads.js
+          ! grep -qi 'R$ 19' index.html
+          ! grep -qi 'R$ 39' index.html
