@@ -31,11 +31,11 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 
 - [ ] Adicionar proteção externa contra abuso/bots (Turnstile ou equivalente).
 - [ ] Criar lembretes automáticos de atendimento.
-- [ ] Permitir editar serviço sem precisar remover e criar novamente.
+- [x] Permitir editar serviço sem precisar remover e criar novamente.
 - [ ] Permitir expediente diferente por dia da semana.
-- [ ] Adicionar status **não compareceu**.
-- [ ] Busca de clientes/agendamentos por nome ou telefone.
-- [ ] Exportar agenda em CSV.
+- [x] Adicionar status **não compareceu**.
+- [x] Busca de clientes/agendamentos por nome, telefone ou serviço.
+- [x] Exportar agenda em CSV.
 - [ ] Testes E2E do fluxo completo em navegador.
 
 ## P2 — evolução do produto
