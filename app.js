@@ -161,9 +161,17 @@ function escapeHtml(value = '') {
   })[char]);
 }
 
+function currentLocale() {
+  return window.AppI18n?.locale?.() || 'pt-BR';
+}
+
+function uiText(value) {
+  return window.AppI18n?.t?.(value) || value;
+}
+
 function showToast(message) {
   const toast = document.querySelector('#toast');
-  toast.textContent = message;
+  toast.textContent = uiText(message);
   toast.classList.add('on');
   window.setTimeout(() => toast.classList.remove('on'), 2200);
 }
@@ -429,7 +437,7 @@ async function loadBetaSummary() {
     if (error) throw error;
     startedEl.textContent = String(data?.started ?? 0);
     completedEl.textContent = String(data?.completed ?? 0);
-    conversionEl.textContent = `${Number(data?.conversion || 0).toLocaleString('pt-BR')}%`;
+    conversionEl.textContent = `${Number(data?.conversion || 0).toLocaleString(currentLocale())}%`;
     ratingEl.textContent = data?.averageRating == null ? '—' : String(data.averageRating).replace('.', ',');
     ratingCountEl.textContent = data?.feedbackCount
       ? `${data.feedbackCount} avaliação${data.feedbackCount === 1 ? '' : 'ões'}`
@@ -492,8 +500,8 @@ function maskPhoneInput(value) {
 
 function formatPrice(value) {
   const amount = Number(value) || 0;
-  if (amount <= 0) return 'Grátis';
-  return amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  if (amount <= 0) return uiText('Grátis');
+  return amount.toLocaleString(currentLocale(), { style: 'currency', currency: 'BRL' });
 }
 
 function localDateString(date) {
@@ -535,11 +543,11 @@ function weeklyHoursSummary(config) {
   const active = (config.days || []).map(day => hoursForDay(config, day)).filter(Boolean);
   if (!active.length) return '—';
   const unique = new Set(active.map(row => `${row.opensAt}–${row.closesAt}`));
-  return unique.size === 1 ? [...unique][0] : 'Horários por dia';
+  return unique.size === 1 ? [...unique][0] : uiText('Horários por dia');
 }
 
 function formatDate(date) {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(currentLocale(), {
     weekday: 'short', day: '2-digit', month: 'short'
   });
 }
@@ -582,13 +590,14 @@ function switchView(name) {
 }
 
 function bookingStatusLabel(status) {
-  return ({
+  const label = ({
     pending: 'Pendente',
     confirmed: 'Confirmada',
     completed: 'Concluída',
     cancelled: 'Cancelada',
     no_show: 'Não compareceu'
   })[status] || 'Reserva';
+  return uiText(label);
 }
 
 function renderSetupProgress(config) {
@@ -839,7 +848,7 @@ function formatBookingSummaryDate(date) {
   if (!date) return 'Escolha uma data';
   const parsed = new Date(`${date}T12:00:00`);
   if (Number.isNaN(parsed.getTime())) return 'Escolha uma data';
-  return parsed.toLocaleDateString('pt-BR', {
+  return parsed.toLocaleDateString(currentLocale(), {
     weekday: 'short',
     day: '2-digit',
     month: 'short'
@@ -873,7 +882,7 @@ async function refreshAvailability() {
   const config = currentConfig();
   const service = serviceById(bookingService.value || config.services[0]?.id);
   const date = bookingDate.value;
-  const dayName = date ? new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {weekday:'long'}) : '';
+  const dayName = date ? new Date(`${date}T00:00:00`).toLocaleDateString(currentLocale(), {weekday:'long'}) : '';
   const selectedWeekday = date ? new Date(`${date}T00:00:00`).getDay() : null;
   const selectedHours = selectedWeekday === null ? null : hoursForDay(config, selectedWeekday);
   const openDay = Boolean(selectedHours);
@@ -923,11 +932,15 @@ function bookingManagementUrl(booking) {
 }
 
 function showBookingConfirmation(booking) {
-  const dateLabel = new Date(`${booking.date}T12:00:00`).toLocaleDateString('pt-BR', {
+  const dateLabel = new Date(`${booking.date}T12:00:00`).toLocaleDateString(currentLocale(), {
     weekday: 'long', day: 'numeric', month: 'long'
   });
-  const summary = `${booking.service} · ${dateLabel}, às ${booking.time} · ${booking.client}`;
-  const message = `Olá, ${booking.client}! Sua reserva de ${booking.service} está confirmada para ${dateLabel}, às ${booking.time}. Até lá!`;
+  const summary = currentLocale() === 'en'
+    ? `${booking.service} · ${dateLabel} at ${booking.time} · ${booking.client}`
+    : `${booking.service} · ${dateLabel}, às ${booking.time} · ${booking.client}`;
+  const message = currentLocale() === 'en'
+    ? `Hi, ${booking.client}! Your ${booking.service} booking is confirmed for ${dateLabel} at ${booking.time}. See you then!`
+    : `Olá, ${booking.client}! Sua reserva de ${booking.service} está confirmada para ${dateLabel}, às ${booking.time}. Até lá!`;
   document.querySelector('#confirmationSummary').textContent = summary;
   document.querySelector('#confirmationMessage').textContent = message;
   document.querySelector('#whatsappConfirmation').href = `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -965,11 +978,12 @@ function managementBackUrl() {
 function updateManagedBookingSummary() {
   if (!managedBooking || !currentBusiness) return;
   const local = inBusinessZone(managedBooking.startsAt, currentBusiness.timezone);
-  const dateLabel = new Date(local.date + 'T12:00:00').toLocaleDateString('pt-BR', {
+  const dateLabel = new Date(local.date + 'T12:00:00').toLocaleDateString(currentLocale(), {
     weekday: 'long', day: 'numeric', month: 'long'
   });
-  document.querySelector('#manage-current-booking').textContent =
-    `${managedBooking.service.name} · ${dateLabel}, às ${local.time}`;
+  document.querySelector('#manage-current-booking').textContent = currentLocale() === 'en'
+    ? `${managedBooking.service.name} · ${dateLabel} at ${local.time}`
+    : `${managedBooking.service.name} · ${dateLabel}, às ${local.time}`;
 }
 
 async function refreshRescheduleAvailability() {
@@ -1286,7 +1300,7 @@ function updateCloudUi() {
 }
 
 function showAccountMessage(message) {
-  accountMessage.textContent = message;
+  accountMessage.textContent = uiText(message);
 }
 
 function authErrorText(error) {
@@ -1566,7 +1580,7 @@ serviceList.addEventListener('click', async event => {
 
   const button = event.target.closest('[data-remove-service]');
   if (!button) return;
-  if (!window.confirm('Remover este serviço das próximas reservas? Os atendimentos já marcados serão mantidos.')) return;
+  if (!window.confirm(uiText('Remover este serviço das próximas reservas? Os atendimentos já marcados serão mantidos.'))) return;
   const id = button.dataset.removeService;
 
   if (currentUser) {
@@ -1785,7 +1799,7 @@ document.querySelector('#confirm-reschedule').addEventListener('click', async ev
 
 document.querySelector('#confirmCustomerCancellation').addEventListener('click', async event => {
   if (!supabaseClient || !customerCancelMode) return;
-  if (!window.confirm('Cancelar definitivamente esta reserva?')) return;
+  if (!window.confirm(uiText('Cancelar definitivamente esta reserva?'))) return;
   const button = event.currentTarget;
   button.disabled = true;
   try {
@@ -1853,7 +1867,7 @@ bookingList.addEventListener('click', async event => {
     no_show: 'Marcar que o cliente não compareceu?',
     cancelled: 'Cancelar este horário?'
   };
-  if (!window.confirm(prompts[nextStatus])) return;
+  if (!window.confirm(uiText(prompts[nextStatus]))) return;
 
   button.disabled = true;
   if (currentUser) {
@@ -1892,7 +1906,7 @@ function exportBookingsCsv() {
     return;
   }
   const rows = [
-    ['Data','Hora','Cliente','Telefone','Serviço','Duração (min)','Valor','Status'],
+    ['Data','Hora','Cliente','Telefone','Serviço','Duração (min)','Valor','Status'].map(uiText),
     ...bookings.map(booking => [
       booking.date,
       booking.time,
@@ -2053,5 +2067,12 @@ async function initialize() {
   trackBetaEvent('page_view', { mode: 'owner_landing' }, 'owner');
   updatePushUi();
 }
+
+window.addEventListener('app-language-change', () => {
+  renderAll();
+  updateAccountUi();
+  updateBookingSummary();
+  if (managedBooking) updateManagedBookingSummary();
+});
 
 initialize();
