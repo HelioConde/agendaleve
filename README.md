@@ -86,7 +86,7 @@ Execute localmente com `npm install` e `npm run test:e2e`.
 
 ## Push e lembretes
 
-O proprietário pode ativar Web Push explicitamente no navegador e escolher lembretes de 24 horas e/ou 2 horas antes. O despacho roda a cada 5 minutos via `pg_cron` + `pg_net` e a Edge Function `reminder-dispatch`. As chaves privadas VAPID e o segredo do cron ficam no Supabase Vault, nunca no frontend.
+O proprietário pode ativar Web Push explicitamente no navegador e escolher lembretes de 24 horas e/ou 2 horas antes. O despacho roda a cada 5 minutos via `pg_cron` + `pg_net` e a Edge Function `reminder-dispatch`. As notificações respeitam o idioma salvo na conta (PT-BR ou EN). As chaves privadas VAPID e o segredo do cron ficam no Supabase Vault, nunca no frontend.
 
 ## Validação beta
 
