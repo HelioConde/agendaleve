@@ -31,3 +31,8 @@ O produto usa uma camada de i18n no frontend com:
 
 ## QA gates
 Double-booking, timezone handling, overlapping services, cancellation rules, rate limiting, mobile booking flow and cross-account isolation are release blockers.
+
+
+## Branding público
+
+`agendaleve_businesses.brand_color` armazena a cor principal do negócio com validação hexadecimal. O frontend mantém fallback seguro, calcula automaticamente uma cor de texto legível e aplica a personalização somente na experiência de reserva/preview do cliente.
