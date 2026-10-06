@@ -18,6 +18,7 @@
         }
       }
     ),
-    functionUrl: 'https://bnlvvsjgpywpbfhwdcan.supabase.co/functions/v1/create-booking'
+    functionUrl: 'https://bnlvvsjgpywpbfhwdcan.supabase.co/functions/v1/create-booking',
+    availabilityUrl: 'https://bnlvvsjgpywpbfhwdcan.supabase.co/functions/v1/booking-availability'
   };
 })();
