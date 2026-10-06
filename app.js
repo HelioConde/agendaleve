@@ -9,6 +9,13 @@ const DEFAULT_CONFIG = {
   closesAt: '19:00',
   slotStep: 30,
   days: [1, 2, 3, 4, 5],
+  hoursByDay: {
+    1: { opensAt: '08:00', closesAt: '19:00' },
+    2: { opensAt: '08:00', closesAt: '19:00' },
+    3: { opensAt: '08:00', closesAt: '19:00' },
+    4: { opensAt: '08:00', closesAt: '19:00' },
+    5: { opensAt: '08:00', closesAt: '19:00' }
+  },
   services: [{ id: 'service-initial', name: 'Atendimento inicial', duration: 60, price: 0 }],
   isPublic: false,
   slug: ''
@@ -68,14 +75,33 @@ function readJson(key, fallback) {
   }
 }
 
+function normalizeHoursByDay(config) {
+  const days = Array.isArray(config.days) ? config.days.map(Number) : DEFAULT_CONFIG.days;
+  if (config.hoursByDay && typeof config.hoursByDay === 'object') {
+    return Object.fromEntries(days.map(day => {
+      const row = config.hoursByDay[day] || config.hoursByDay[String(day)] || {};
+      return [day, {
+        opensAt: String(row.opensAt || config.opensAt || '08:00').slice(0, 5),
+        closesAt: String(row.closesAt || config.closesAt || '19:00').slice(0, 5)
+      }];
+    }));
+  }
+  return Object.fromEntries(days.map(day => [day, {
+    opensAt: config.opensAt || '08:00',
+    closesAt: config.closesAt || '19:00'
+  }]));
+}
+
 function readLocalConfig() {
   const stored = readJson(STORAGE.config, {});
-  return {
+  const merged = {
     ...DEFAULT_CONFIG,
     ...stored,
-    days: Array.isArray(stored.days) ? stored.days : DEFAULT_CONFIG.days,
+    days: Array.isArray(stored.days) ? stored.days.map(Number) : DEFAULT_CONFIG.days,
     services: Array.isArray(stored.services) ? stored.services : DEFAULT_CONFIG.services
   };
+  merged.hoursByDay = normalizeHoursByDay(merged);
+  return merged;
 }
 
 function writeLocalConfig(config) {
@@ -180,6 +206,22 @@ function currentBookings() {
 
 function serviceById(id) {
   return currentConfig().services.find(service => service.id === id);
+}
+
+function hoursForDay(config, weekday) {
+  const row = config.hoursByDay?.[weekday] || config.hoursByDay?.[String(weekday)];
+  if (row) return row;
+  if (config.days?.includes(Number(weekday))) {
+    return { opensAt: config.opensAt || '08:00', closesAt: config.closesAt || '19:00' };
+  }
+  return null;
+}
+
+function weeklyHoursSummary(config) {
+  const active = (config.days || []).map(day => hoursForDay(config, day)).filter(Boolean);
+  if (!active.length) return '—';
+  const unique = new Set(active.map(row => `${row.opensAt}–${row.closesAt}`));
+  return unique.size === 1 ? [...unique][0] : 'Horários por dia';
 }
 
 function formatDate(date) {
@@ -330,7 +372,7 @@ function renderDashboard() {
   document.querySelector('#business-name-card').textContent = config.businessName;
   document.querySelector('#stat-upcoming').textContent = String(upcomingActive.length);
   document.querySelector('#stat-services').textContent = String(config.services.length);
-  document.querySelector('#stat-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
+  document.querySelector('#stat-hours').textContent = weeklyHoursSummary(config);
   renderSetupProgress(config);
   const filterCount = document.querySelector('#booking-filter-count');
   if (filterCount) filterCount.textContent = bookings.length === 1 ? '1 agendamento neste filtro.' : `${bookings.length} agendamentos neste filtro.`;
@@ -363,11 +405,17 @@ function renderDashboard() {
 function fillSettings() {
   const config = currentConfig();
   configForm.elements.businessName.value = config.businessName;
-  configForm.elements.opensAt.value = config.opensAt;
-  configForm.elements.closesAt.value = config.closesAt;
   configForm.elements.slotStep.value = String(config.slotStep);
-  configForm.querySelectorAll('[name="days"]').forEach(input => {
-    input.checked = config.days.includes(Number(input.value));
+  configForm.querySelectorAll('[name="dayEnabled"]').forEach(input => {
+    const weekday = Number(input.value);
+    const enabled = config.days.includes(weekday);
+    const row = input.closest('.weekly-hours-row');
+    const hours = hoursForDay(config, weekday) || { opensAt: '08:00', closesAt: '19:00' };
+    input.checked = enabled;
+    row.classList.toggle('enabled', enabled);
+    row.querySelector(`[data-day-open="${weekday}"]`).value = hours.opensAt;
+    row.querySelector(`[data-day-close="${weekday}"]`).value = hours.closesAt;
+    row.querySelectorAll('input[type="time"]').forEach(field => field.disabled = !enabled);
   });
   document.querySelector('#settings-public').checked = Boolean(config.isPublic);
   renderServices();
@@ -420,7 +468,11 @@ function renderServiceOptions() {
   bookingForm.querySelector('[type="submit"]').disabled = !enabled;
 
   document.querySelector('#booking-business-name').textContent = config.businessName;
-  document.querySelector('#booking-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
+  const selectedWeekday = bookingDate.value ? new Date(`${bookingDate.value}T00:00:00`).getDay() : null;
+  const selectedHours = selectedWeekday === null ? null : hoursForDay(config, selectedWeekday);
+  document.querySelector('#booking-hours').textContent = selectedHours
+    ? `${selectedHours.opensAt}–${selectedHours.closesAt}`
+    : weeklyHoursSummary(config);
   updateBookingSummary();
 }
 
@@ -430,8 +482,11 @@ function availableTimesLocal(date, service) {
   const selectedDate = new Date(`${date}T00:00:00`);
   if (!config.days.includes(selectedDate.getDay())) return [];
 
-  const open = minutesOf(config.opensAt);
-  const close = minutesOf(config.closesAt);
+  const weekday = selectedDate.getDay();
+  const dailyHours = hoursForDay(config, weekday);
+  if (!dailyHours) return [];
+  const open = minutesOf(dailyHours.opensAt);
+  const close = minutesOf(dailyHours.closesAt);
   const duration = Number(service.duration);
   const today = new Date();
   const isToday = date === localDateString(today);
@@ -504,7 +559,12 @@ async function refreshAvailability() {
   const service = serviceById(bookingService.value || config.services[0]?.id);
   const date = bookingDate.value;
   const dayName = date ? new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {weekday:'long'}) : '';
-  const openDay = date && config.days.includes(new Date(`${date}T00:00:00`).getDay());
+  const selectedWeekday = date ? new Date(`${date}T00:00:00`).getDay() : null;
+  const selectedHours = selectedWeekday === null ? null : hoursForDay(config, selectedWeekday);
+  const openDay = Boolean(selectedHours);
+  document.querySelector('#booking-hours').textContent = selectedHours
+    ? `${selectedHours.opensAt}–${selectedHours.closesAt}`
+    : weeklyHoursSummary(config);
 
   let times = [];
   bookingTime.disabled = true;
@@ -688,12 +748,17 @@ function showCustomerCancellationPanel() {
 
 function cloudConfigFromRows(business, hours, services) {
   const firstHours = hours[0];
+  const hoursByDay = Object.fromEntries(hours.map(row => [Number(row.weekday), {
+    opensAt: row.opens_at?.slice(0, 5) || '08:00',
+    closesAt: row.closes_at?.slice(0, 5) || '19:00'
+  }]));
   return {
     businessName: business.name,
     opensAt: firstHours?.opens_at?.slice(0, 5) || '08:00',
     closesAt: firstHours?.closes_at?.slice(0, 5) || '19:00',
     slotStep: Number(business.slot_interval_minutes) || 30,
     days: hours.map(row => Number(row.weekday)).sort((a, b) => a - b),
+    hoursByDay,
     services: services.filter(row => row.is_active !== false).map(row => ({
       id: row.id,
       name: row.name,
@@ -804,7 +869,7 @@ async function loadPublicBusiness() {
   switchView('reservas');
 }
 
-async function saveCloudSettings(values, days) {
+async function saveCloudSettings(values, schedule) {
   if (!currentUser || !supabaseClient) throw new Error('Entre na conta primeiro.');
   const name = values.businessName.trim();
   const payload = {
@@ -841,12 +906,12 @@ async function saveCloudSettings(values, days) {
     .eq('business_id', business.id);
   if (deleteHoursError) throw deleteHoursError;
 
-  if (days.length) {
-    const rows = days.map(weekday => ({
+  if (schedule.length) {
+    const rows = schedule.map(item => ({
       business_id: business.id,
-      weekday,
-      opens_at: values.opensAt,
-      closes_at: values.closesAt
+      weekday: item.weekday,
+      opens_at: item.opensAt,
+      closes_at: item.closesAt
     }));
     const { error: hoursError } = await supabaseClient.from('agendaleve_business_hours').insert(rows);
     if (hoursError) throw hoursError;
@@ -1025,13 +1090,21 @@ configForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!configForm.reportValidity()) return;
   const values = Object.fromEntries(new FormData(configForm));
-  const days = Array.from(configForm.querySelectorAll('[name="days"]:checked')).map(input => Number(input.value));
-  if (!days.length) {
+  const schedule = Array.from(configForm.querySelectorAll('[name="dayEnabled"]:checked')).map(input => {
+    const weekday = Number(input.value);
+    return {
+      weekday,
+      opensAt: configForm.querySelector(`[data-day-open="${weekday}"]`).value,
+      closesAt: configForm.querySelector(`[data-day-close="${weekday}"]`).value
+    };
+  });
+  if (!schedule.length) {
     showToast('Selecione pelo menos um dia de atendimento.');
     return;
   }
-  if (minutesOf(values.closesAt) <= minutesOf(values.opensAt)) {
-    showToast('O horário de fechamento precisa ser depois da abertura.');
+  const invalidDay = schedule.find(item => !item.opensAt || !item.closesAt || minutesOf(item.closesAt) <= minutesOf(item.opensAt));
+  if (invalidDay) {
+    showToast('Revise os horários: o fechamento precisa ser depois da abertura.');
     return;
   }
 
@@ -1039,7 +1112,7 @@ configForm.addEventListener('submit', async event => {
     const button = configForm.querySelector('[type="submit"]');
     button.disabled = true;
     try {
-      await saveCloudSettings(values, days);
+      await saveCloudSettings(values, schedule);
       showToast('Configurações sincronizadas.');
     } catch (error) {
       console.error(error);
@@ -1051,13 +1124,20 @@ configForm.addEventListener('submit', async event => {
   }
 
   const current = readLocalConfig();
+  const days = schedule.map(item => item.weekday);
+  const hoursByDay = Object.fromEntries(schedule.map(item => [item.weekday, {
+    opensAt: item.opensAt,
+    closesAt: item.closesAt
+  }]));
+  const first = schedule[0];
   activeConfig = {
     ...current,
     businessName: values.businessName.trim(),
-    opensAt: values.opensAt,
-    closesAt: values.closesAt,
+    opensAt: first.opensAt,
+    closesAt: first.closesAt,
     slotStep: Number(values.slotStep),
     days,
+    hoursByDay,
     isPublic: false
   };
   writeLocalConfig(activeConfig);
@@ -1173,6 +1253,19 @@ serviceList.addEventListener('click', async event => {
 });
 
 document.querySelector('#cancel-service-edit').addEventListener('click', resetServiceEditor);
+
+configForm.querySelectorAll('[name="dayEnabled"]').forEach(input => {
+  input.addEventListener('change', event => {
+    const weekday = Number(event.currentTarget.value);
+    const row = event.currentTarget.closest('.weekly-hours-row');
+    const enabled = event.currentTarget.checked;
+    row.classList.toggle('enabled', enabled);
+    row.querySelectorAll('input[type="time"]').forEach(field => {
+      field.disabled = !enabled;
+      if (enabled && !field.value) field.value = field.hasAttribute('data-day-open') ? '08:00' : '19:00';
+    });
+  });
+});
 
 bookingService.addEventListener('change', refreshAvailability);
 bookingDate.addEventListener('change', refreshAvailability);
