@@ -58,8 +58,10 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 - [ ] Relatório de comparecimento e cancelamentos.
 - [ ] Dashboard de receita estimada.
 - [ ] Domínio/link personalizado.
-- [ ] PWA/instalação.
+- [x] PWA/instalação com manifest, service worker, cache de shell e prompt de instalação.
 - [x] Notificações push web opt-in para lembretes.
+- [x] Teste de push pelo painel.
+- [x] Métricas beta dos últimos 30 dias no painel do proprietário.
 - [ ] Integrações com calendário.
 
 ## Regra de priorização
