@@ -46,3 +46,6 @@ jobs:
           grep -qi 'cancelToken' supabase/functions/create-booking/index.ts
           grep -qi 'cancel_token_hash' supabase/functions/cancel-booking/index.ts
           grep -qi 'cancelBookingPanel' index.html
+          grep -qi 'booking-summary-service' index.html
+          grep -qi 'updateBookingSummary' app.js
+          grep -qi 'ownerDashboard' app.js
