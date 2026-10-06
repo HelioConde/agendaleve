@@ -83,7 +83,13 @@
           <article class="stat-card"><span>Expediente</span><strong id="stat-hours">—</strong><small>horário de atendimento</small></article>
         </div>
         <section class="panel">
-          <div class="panel-heading"><div><h3>Próximos horários</h3><p>Reservas confirmadas e pendentes.</p></div></div>
+          <div class="panel-heading agenda-panel-heading">
+            <div><h3>Agenda</h3><p id="booking-filter-count">Reservas confirmadas e pendentes.</p></div>
+            <div class="agenda-filters" aria-label="Filtros da agenda">
+              <label><span>Período</span><select id="booking-date-filter"><option value="upcoming">Próximas</option><option value="today">Hoje</option><option value="past">Passadas</option><option value="all">Todas</option></select></label>
+              <label><span>Status</span><select id="booking-status-filter"><option value="active">Ativas</option><option value="pending">Pendentes</option><option value="confirmed">Confirmadas</option><option value="completed">Concluídas</option><option value="cancelled">Canceladas</option><option value="all">Todos</option></select></label>
+            </div>
+          </div>
           <div class="items" id="booking-list"></div>
         </section>
       </section>
