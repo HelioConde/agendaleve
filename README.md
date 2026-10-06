@@ -58,3 +58,13 @@ O painel e a página pública compartilham os mesmos tokens, mas a página de re
 ## Roadmap
 
 A lista priorizada de melhorias e o estado de implementação ficam em [MELHORIAS.md](./MELHORIAS.md).
+
+
+## QA
+
+O repositório possui duas camadas automáticas:
+
+- **Static QA:** sintaxe JavaScript, arquivos obrigatórios, integrações e marcadores críticos;
+- **Browser E2E:** Playwright + Chromium cobrindo configuração do negócio, expediente por dia, criação/edição de serviço, reserva local e consulta na agenda.
+
+Execute localmente com `npm install` e `npm run test:e2e`.
