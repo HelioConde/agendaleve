@@ -56,6 +56,14 @@ const bookingSummaryPrice = document.querySelector('#booking-summary-price');
 const bookingSummaryDate = document.querySelector('#booking-summary-date');
 const bookingSummaryTime = document.querySelector('#booking-summary-time');
 const bookingSummaryHelp = document.querySelector('#booking-summary-help');
+const pushToggleButton = document.querySelector('#push-toggle');
+const pushStatus = document.querySelector('#push-status');
+const saveRemindersButton = document.querySelector('#save-reminders');
+const reminder24h = document.querySelector('#reminder-24h');
+const reminder2h = document.querySelector('#reminder-2h');
+const clientFeedbackForm = document.querySelector('#client-feedback-form');
+const ownerFeedbackForm = document.querySelector('#owner-feedback-form');
+const turnstileContainer = document.querySelector('#turnstile-container');
 
 let currentUser = null;
 let currentBusiness = null;
@@ -65,6 +73,20 @@ let availableSlotMap = new Map();
 let managedBooking = null;
 let editingServiceId = null;
 let cloudLoading = false;
+let turnstileToken = '';
+let turnstileWidgetId = null;
+let turnstileScriptPromise = null;
+let bookingStartedTracked = false;
+
+const betaSessionId = (() => {
+  const key = 'agendaleve-beta-session';
+  let value = sessionStorage.getItem(key);
+  if (!value) {
+    value = (crypto.randomUUID?.() || String(Date.now())) + '-' + Math.random().toString(36).slice(2);
+    sessionStorage.setItem(key, value);
+  }
+  return value;
+})();
 
 function readJson(key, fallback) {
   try {
@@ -141,6 +163,241 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add('on');
   window.setTimeout(() => toast.classList.remove('on'), 2200);
+}
+
+function betaRole() {
+  return currentUser && !publicMode ? 'owner' : 'client';
+}
+
+async function sendBetaSignal(payload) {
+  if (!supabaseClient) return null;
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('beta-signal', {
+      body: {
+        sessionId: betaSessionId,
+        businessSlug: currentBusiness?.slug || publicSlug || '',
+        role: payload.role || betaRole(),
+        ...payload
+      }
+    });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.debug('AgendaLeve beta signal skipped:', error?.message || error);
+    return null;
+  }
+}
+
+function trackBetaEvent(eventName, context = {}, role = betaRole()) {
+  return sendBetaSignal({ kind: 'event', eventName, context, role });
+}
+
+function turnstileIsConfigured() {
+  return Boolean(window.AGENDALEVE_SUPABASE?.turnstileSiteKey);
+}
+
+function loadTurnstileScript() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve(window.turnstile);
+    script.onerror = () => reject(new Error('turnstile_load_failed'));
+    document.head.append(script);
+  });
+  return turnstileScriptPromise;
+}
+
+async function ensureTurnstileWidget() {
+  if (!turnstileContainer || !turnstileIsConfigured() || customerCancelMode) return;
+  turnstileContainer.hidden = false;
+  if (turnstileWidgetId !== null) return;
+  try {
+    const turnstile = await loadTurnstileScript();
+    if (!turnstile?.render) throw new Error('turnstile_unavailable');
+    turnstileWidgetId = turnstile.render(turnstileContainer, {
+      sitekey: window.AGENDALEVE_SUPABASE.turnstileSiteKey,
+      theme: 'light',
+      size: 'flexible',
+      appearance: 'interaction-only',
+      callback: token => { turnstileToken = token; },
+      'expired-callback': () => { turnstileToken = ''; },
+      'error-callback': () => { turnstileToken = ''; }
+    });
+  } catch (error) {
+    console.error(error);
+    showToast('A proteção anti-bot não carregou. Tente atualizar a página.');
+  }
+}
+
+function resetTurnstile() {
+  turnstileToken = '';
+  if (turnstileWidgetId !== null && window.turnstile?.reset) {
+    try { window.turnstile.reset(turnstileWidgetId); } catch {}
+  }
+}
+
+function base64UrlToUint8Array(value) {
+  const padding = '='.repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
+}
+
+function pushIsSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+
+async function getPushRegistration() {
+  if (!pushIsSupported()) return null;
+  return navigator.serviceWorker.register('./sw.js');
+}
+
+async function getCurrentPushSubscription() {
+  const registration = await getPushRegistration();
+  return registration ? registration.pushManager.getSubscription() : null;
+}
+
+async function updatePushUi() {
+  if (!pushToggleButton || !pushStatus || !saveRemindersButton) return;
+  if (!currentUser) {
+    pushToggleButton.disabled = true;
+    saveRemindersButton.disabled = true;
+    pushToggleButton.textContent = 'Ativar notificações';
+    pushStatus.textContent = 'Entre na sua conta para ativar o push.';
+    return;
+  }
+  if (!pushIsSupported()) {
+    pushToggleButton.disabled = true;
+    saveRemindersButton.disabled = false;
+    pushStatus.textContent = 'Este navegador não oferece notificações push.';
+    return;
+  }
+  pushToggleButton.disabled = false;
+  saveRemindersButton.disabled = false;
+  const subscription = await getCurrentPushSubscription();
+  if (subscription && Notification.permission === 'granted') {
+    pushToggleButton.textContent = 'Desativar notificações';
+    pushStatus.textContent = 'Push ativo neste navegador.';
+  } else {
+    pushToggleButton.textContent = 'Ativar notificações';
+    pushStatus.textContent = Notification.permission === 'denied'
+      ? 'Notificações bloqueadas nas permissões do navegador.'
+      : 'Ative o push para receber os lembretes selecionados.';
+  }
+}
+
+async function loadReminderPreferences() {
+  if (!currentUser || !supabaseClient || !reminder24h || !reminder2h) return;
+  const { data, error } = await supabaseClient
+    .from('agendaleve_reminder_preferences')
+    .select('enabled,push_enabled,reminder_minutes')
+    .eq('owner_id', currentUser.id)
+    .maybeSingle();
+  if (error) {
+    console.warn('Preferências de lembrete indisponíveis:', error.message);
+    return;
+  }
+  const minutes = data?.reminder_minutes || [1440, 120];
+  reminder24h.checked = minutes.includes(1440);
+  reminder2h.checked = minutes.includes(120);
+}
+
+async function saveReminderPreferences(showConfirmation = true) {
+  if (!currentUser || !supabaseClient) {
+    showToast('Entre na sua conta para salvar lembretes.');
+    return false;
+  }
+  const minutes = [];
+  if (reminder24h?.checked) minutes.push(1440);
+  if (reminder2h?.checked) minutes.push(120);
+  if (!minutes.length) {
+    showToast('Escolha pelo menos um lembrete.');
+    return false;
+  }
+  const { error } = await supabaseClient
+    .from('agendaleve_reminder_preferences')
+    .upsert({
+      owner_id: currentUser.id,
+      enabled: true,
+      push_enabled: true,
+      reminder_minutes: minutes,
+      updated_at: new Date().toISOString()
+    });
+  if (error) {
+    console.error(error);
+    showToast('Não foi possível salvar os lembretes.');
+    return false;
+  }
+  if (showConfirmation) showToast('Lembretes salvos.');
+  return true;
+}
+
+async function enablePushNotifications() {
+  if (!currentUser || !supabaseClient || !pushIsSupported()) return;
+  const publicKey = window.AGENDALEVE_SUPABASE?.pushVapidPublicKey;
+  if (!publicKey) {
+    showToast('Push ainda não está configurado.');
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    await updatePushUi();
+    return;
+  }
+  const registration = await getPushRegistration();
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: base64UrlToUint8Array(publicKey)
+    });
+  }
+  const json = subscription.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    throw new Error('invalid_push_subscription');
+  }
+  const { error } = await supabaseClient
+    .from('agendaleve_push_subscriptions')
+    .upsert({
+      owner_id: currentUser.id,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+      user_agent: navigator.userAgent.slice(0, 300),
+      is_active: true,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'owner_id,endpoint' });
+  if (error) throw error;
+  await saveReminderPreferences(false);
+  await registration.showNotification('AgendaLeve', {
+    body: 'Notificações ativadas. Você receberá lembretes dos próximos atendimentos.',
+    tag: 'agendaleve-push-enabled'
+  });
+  await trackBetaEvent('push_enabled', { permission: 'granted' }, 'owner');
+  await updatePushUi();
+  showToast('Notificações ativadas.');
+}
+
+async function disablePushNotifications() {
+  if (!currentUser || !supabaseClient || !pushIsSupported()) return;
+  const subscription = await getCurrentPushSubscription();
+  if (!subscription) {
+    await updatePushUi();
+    return;
+  }
+  const endpoint = subscription.endpoint;
+  await subscription.unsubscribe();
+  await supabaseClient
+    .from('agendaleve_push_subscriptions')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('owner_id', currentUser.id)
+    .eq('endpoint', endpoint);
+  await updatePushUi();
+  showToast('Notificações desativadas neste navegador.');
 }
 
 function minutesOf(time) {
