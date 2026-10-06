@@ -150,13 +150,27 @@
           </div>
           <button class="text-button" id="newBooking" type="button">Fazer outro agendamento →</button>
         </section>
-        <section class="booking-confirmation panel" id="cancelBookingPanel" hidden aria-live="polite">
-          <span class="confirmation-check cancellation-mark" aria-hidden="true">×</span>
+        <section class="booking-confirmation panel manage-booking-panel" id="cancelBookingPanel" hidden aria-live="polite">
+          <span class="confirmation-check manage-mark" aria-hidden="true">↻</span>
           <p class="eyebrow">GERENCIAR RESERVA</p>
-          <h2 id="cancelBookingTitle" tabindex="-1">Cancelar esta reserva?</h2>
-          <p id="cancelBookingText" class="confirmation-summary">Ao confirmar, o horário volta a ficar disponível para outras pessoas.</p>
-          <button class="secondary cancellation-button" id="confirmCustomerCancellation" type="button">Cancelar minha reserva</button>
-          <a class="text-button cancel-back-link" id="backToBooking" href="#">Voltar sem cancelar</a>
+          <h2 id="cancelBookingTitle" tabindex="-1">Gerencie seu horário</h2>
+          <p id="cancelBookingText" class="confirmation-summary">Carregando os dados da sua reserva…</p>
+          <div id="reschedule-box" class="reschedule-box" hidden>
+            <div class="manage-current">
+              <span>Reserva atual</span>
+              <strong id="manage-current-booking"></strong>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Nova data</span><input id="reschedule-date" type="date"></label>
+              <label class="field"><span>Novo horário</span><select id="reschedule-time" disabled><option value="">Escolha uma data</option></select></label>
+            </div>
+            <button class="primary compact manage-primary" id="confirm-reschedule" type="button" disabled>Confirmar novo horário</button>
+          </div>
+          <div class="manage-danger-zone" id="manage-danger-zone" hidden>
+            <span>Não vai conseguir comparecer?</span>
+            <button class="secondary cancellation-button" id="confirmCustomerCancellation" type="button">Cancelar minha reserva</button>
+          </div>
+          <a class="text-button cancel-back-link" id="backToBooking" href="#">Voltar para a agenda</a>
         </section>
       </section>
 
