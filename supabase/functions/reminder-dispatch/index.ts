@@ -95,8 +95,9 @@ Deno.serve(async (request: Request) => {
   ]);
 
   const preferenceMap = new Map((preferences || []).map(item => [item.owner_id, item]));
-  const subscriptionsByOwner = new Map<string, typeof subscriptions>();
-  for (const sub of subscriptions || []) {
+  type PushRow = { id: string; owner_id: string; endpoint: string; p256dh: string; auth: string; is_active: boolean };
+  const subscriptionsByOwner = new Map<string, PushRow[]>();
+  for (const sub of (subscriptions || []) as PushRow[]) {
     const list = subscriptionsByOwner.get(sub.owner_id) || [];
     list.push(sub);
     subscriptionsByOwner.set(sub.owner_id, list);
