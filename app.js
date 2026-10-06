@@ -15,7 +15,11 @@ const DEFAULT_CONFIG = {
 };
 
 const supabaseClient = window.AGENDALEVE_SUPABASE?.client || null;
-const publicSlug = new URLSearchParams(location.search).get('negocio')?.trim().toLowerCase() || '';
+const queryParams = new URLSearchParams(location.search);
+const publicSlug = queryParams.get('negocio')?.trim().toLowerCase() || '';
+const cancelBookingId = queryParams.get('booking')?.trim() || '';
+const cancelToken = queryParams.get('cancel')?.trim() || '';
+const customerCancelMode = Boolean(cancelBookingId && cancelToken);
 const publicMode = Boolean(publicSlug);
 
 const configForm = document.querySelector('#settings-form');
@@ -365,6 +369,17 @@ async function refreshAvailability() {
   else if (!service) bookingTime.firstElementChild.textContent = 'Cadastre um serviço';
 }
 
+function bookingManagementUrl(booking) {
+  if (!publicSlug || !booking?.id || !booking?.cancelToken) return '';
+  const url = new URL(location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('negocio', publicSlug);
+  url.searchParams.set('booking', booking.id);
+  url.searchParams.set('cancel', booking.cancelToken);
+  return url.toString();
+}
+
 function showBookingConfirmation(booking) {
   const dateLabel = new Date(`${booking.date}T12:00:00`).toLocaleDateString('pt-BR', {
     weekday: 'long', day: 'numeric', month: 'long'
@@ -374,9 +389,34 @@ function showBookingConfirmation(booking) {
   document.querySelector('#confirmationSummary').textContent = summary;
   document.querySelector('#confirmationMessage').textContent = message;
   document.querySelector('#whatsappConfirmation').href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+  const managementUrl = bookingManagementUrl(booking);
+  const cancelBox = document.querySelector('#cancel-link-box');
+  cancelBox.hidden = !managementUrl;
+  if (managementUrl) {
+    document.querySelector('#cancel-reservation-link').href = managementUrl;
+    document.querySelector('#copy-cancel-link').dataset.cancelUrl = managementUrl;
+  }
+
   document.querySelector('#bookingFormLayout').hidden = true;
   document.querySelector('#bookingConfirmation').hidden = false;
+  document.querySelector('#cancelBookingPanel').hidden = true;
   document.querySelector('#bookingConfirmation h2').focus();
+}
+
+function showCustomerCancellationPanel() {
+  document.querySelector('#bookingFormLayout').hidden = true;
+  document.querySelector('#bookingConfirmation').hidden = true;
+  const panel = document.querySelector('#cancelBookingPanel');
+  panel.hidden = false;
+  document.querySelector('#public-mode-name').textContent = 'Gerenciar reserva';
+  const back = document.querySelector('#backToBooking');
+  const backUrl = new URL(location.href);
+  backUrl.search = '';
+  backUrl.hash = '';
+  backUrl.searchParams.set('negocio', publicSlug);
+  back.href = backUrl.toString();
+  document.querySelector('#cancelBookingTitle').focus();
 }
 
 function cloudConfigFromRows(business, hours, services) {
@@ -879,6 +919,7 @@ bookingForm.addEventListener('submit', async event => {
       if (error) throw error;
       booking = {
         id: data?.bookingId || crypto.randomUUID?.() || String(Date.now()),
+        cancelToken: data?.cancelToken || '',
         client: values.client.trim(),
         phone,
         serviceId: service.id,
@@ -939,6 +980,38 @@ bookingForm.addEventListener('submit', async event => {
     await refreshAvailability();
     showToast('Esse horário pode ter acabado de ser reservado. Escolha outro.');
   } finally {
+    button.disabled = false;
+  }
+});
+
+document.querySelector('#copy-cancel-link').addEventListener('click', async event => {
+  const url = event.currentTarget.dataset.cancelUrl;
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast('Link de cancelamento copiado.');
+  } catch {
+    showToast('Não foi possível copiar o link.');
+  }
+});
+
+document.querySelector('#confirmCustomerCancellation').addEventListener('click', async event => {
+  if (!supabaseClient || !customerCancelMode) return;
+  if (!window.confirm('Cancelar definitivamente esta reserva?')) return;
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const { error } = await supabaseClient.functions.invoke('cancel-booking', {
+      body: { bookingId: cancelBookingId, cancelToken }
+    });
+    if (error) throw error;
+    document.querySelector('#cancelBookingTitle').textContent = 'Reserva cancelada';
+    document.querySelector('#cancelBookingText').textContent = 'O horário foi liberado. Se precisar, você pode fazer um novo agendamento.';
+    button.hidden = true;
+    document.querySelector('#backToBooking').textContent = 'Fazer novo agendamento →';
+  } catch (error) {
+    console.error(error);
+    showToast('Esta reserva não pode mais ser cancelada por este link.');
     button.disabled = false;
   }
 });
@@ -1045,6 +1118,10 @@ async function initialize() {
     document.querySelector('#plans-section').hidden = true;
     document.querySelector('#public-mode-banner').hidden = false;
     document.querySelector('#view-reservas').hidden = false;
+    if (customerCancelMode) {
+      showCustomerCancellationPanel();
+      return;
+    }
     if (supabaseClient) await loadPublicBusiness();
     else {
       document.querySelector('#booking-business-name').textContent = 'Agenda indisponível';
