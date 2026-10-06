@@ -4,7 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f8f5">
-  <meta name="description" content="Organize seus horários e permita que clientes escolham um serviço e um horário disponível.">
+  <meta name="description" content="Agenda online para pequenos negócios: configure serviços, receba reservas e compartilhe um link público com seus clientes.">
+  <meta property="og:title" content="AgendaLeve — agendamentos simples para seu negócio">
+  <meta property="og:description" content="Organize horários e receba reservas sem trocar várias mensagens.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://helioconde.github.io/agendaleve/">
+  <link rel="canonical" href="https://helioconde.github.io/agendaleve/">
   <title>AgendaLeve — Agendamentos simples para seu negócio</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -12,15 +17,43 @@
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="AgendaLeve, início">AgendaLeve<span>.</span></a>
-      <div class="topbar-note"><span class="demo-dot"></span> Ambiente de demonstração · dados neste navegador</div>
+      <div class="topbar-actions">
+        <span id="sync-status" class="topbar-note" role="status"><span class="demo-dot"></span> Modo local</span>
+        <button id="account-open" class="secondary compact" type="button">Entrar / sincronizar</button>
+      </div>
     </header>
+
+    <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow">CONTA DO NEGÓCIO</span>
+          <h2 id="account-title">Sincronize sua agenda</h2>
+        </div>
+        <button id="account-close" class="dialog-close" type="button" aria-label="Fechar">×</button>
+      </div>
+      <p class="sub">Entre para salvar serviços, horários e reservas na nuvem. Sem conta, o modo demonstrativo continua funcionando neste dispositivo.</p>
+      <form id="auth-form">
+        <label class="field"><span>E-mail</span><input name="email" type="email" autocomplete="email" required></label>
+        <label class="field"><span>Senha</span><input name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <button class="primary" type="submit">Entrar</button>
+        <div class="account-links">
+          <button id="sign-up" class="secondary" type="button">Criar conta</button>
+          <button id="reset-password" class="text-button" type="button">Esqueci a senha</button>
+        </div>
+      </form>
+      <div id="account-profile" hidden>
+        <p>Conectado como <strong id="account-email"></strong></p>
+        <button id="sign-out" class="secondary" type="button">Sair da conta</button>
+      </div>
+      <p id="account-message" class="account-message" role="status" aria-live="polite"></p>
+    </dialog>
 
     <main>
       <section class="intro">
         <div>
           <p class="eyebrow">AGENDA ONLINE PARA NEGÓCIOS LOCAIS</p>
           <h1>Mais tempo atendendo.<br><span>Menos tempo organizando.</span></h1>
-          <p class="intro-copy">Configure seus serviços e horários. Veja como seus clientes podem reservar um atendimento sem trocar várias mensagens.</p>
+          <p class="intro-copy">Configure seus serviços e horários. Compartilhe seu link e deixe seus clientes reservarem um atendimento sem trocar várias mensagens.</p>
         </div>
         <aside class="intro-card">
           <span class="intro-icon" aria-hidden="true">◷</span>
@@ -28,7 +61,12 @@
         </aside>
       </section>
 
-      <nav class="tabs" aria-label="Seções do AgendaLeve">
+      <div id="public-mode-banner" class="public-mode-banner" hidden>
+        <div><strong id="public-mode-name">Reservar horário</strong><span>Você está na página pública de reservas deste negócio.</span></div>
+        <a class="secondary" href="./">Criar minha agenda</a>
+      </div>
+
+      <nav class="tabs" id="main-tabs" aria-label="Seções do AgendaLeve">
         <button class="tab active" type="button" data-view="agenda" aria-current="page">Minha agenda</button>
         <button class="tab" type="button" data-view="reservas">Reservar horário</button>
         <button class="tab" type="button" data-view="configuracao">Configurar negócio</button>
@@ -45,13 +83,13 @@
           <article class="stat-card"><span>Expediente</span><strong id="stat-hours">—</strong><small>horário de atendimento</small></article>
         </div>
         <section class="panel">
-          <div class="panel-heading"><div><h3>Próximos horários</h3><p>Agendamentos criados pela página de reserva demonstrativa.</p></div></div>
+          <div class="panel-heading"><div><h3>Próximos horários</h3><p>Reservas confirmadas e pendentes.</p></div></div>
           <div class="items" id="booking-list"></div>
         </section>
       </section>
 
       <section class="view" id="view-reservas" hidden>
-        <div class="view-heading"><div><p class="eyebrow">PÁGINA DO CLIENTE · DEMONSTRAÇÃO</p><h2>Escolha seu atendimento</h2></div></div>
+        <div class="view-heading"><div><p class="eyebrow">PÁGINA DO CLIENTE</p><h2>Escolha seu atendimento</h2></div></div>
         <div class="booking-layout" id="bookingFormLayout">
           <section class="panel booking-panel">
             <p class="business-label">Reservas para</p>
@@ -63,19 +101,19 @@
               <label class="field"><span>Horário disponível</span><select id="booking-time" name="time" required></select></label>
               <label class="field"><span>Seu nome</span><input name="client" type="text" maxlength="80" placeholder="Ex.: Marina Souza" autocomplete="name" required></label>
               <button class="primary" type="submit">Confirmar reserva</button>
-              <p class="form-footnote">Demonstração: a reserva fica salva somente neste navegador. Nenhuma mensagem será enviada.</p>
+              <p class="form-footnote" id="booking-mode-note">No modo local, a reserva fica somente neste navegador.</p>
             </form>
           </section>
           <aside class="booking-aside">
             <div class="aside-icon" aria-hidden="true">✓</div>
             <h3>Horários sem conflito</h3>
-            <p>Os horários ocupados desaparecem da lista. A duração do serviço é considerada ao montar os horários disponíveis.</p>
+            <p>Os horários ocupados desaparecem da lista. A duração do serviço é considerada ao montar as opções disponíveis.</p>
             <div class="hours-chip"><span>Expediente</span><strong id="booking-hours">—</strong></div>
           </aside>
         </div>
         <section class="booking-confirmation panel" id="bookingConfirmation" hidden aria-live="polite">
           <span class="confirmation-check" aria-hidden="true">✓</span>
-          <p class="eyebrow">RESERVA CONFIRMADA · DEMONSTRAÇÃO</p>
+          <p class="eyebrow">RESERVA CONFIRMADA</p>
           <h2 tabindex="-1">Seu horário está reservado!</h2>
           <p id="confirmationSummary" class="confirmation-summary"></p>
           <div class="confirmation-message">
@@ -92,6 +130,14 @@
 
       <section class="view" id="view-configuracao" hidden>
         <div class="view-heading"><div><p class="eyebrow">COMECE POR AQUI</p><h2>Configure seu negócio</h2></div></div>
+        <div id="cloud-callout" class="cloud-callout">
+          <div><strong>Publique seu link de reservas</strong><span>Entre na sua conta para sincronizar e compartilhar uma página pública com seus clientes.</span></div>
+          <button class="secondary" id="cloud-callout-login" type="button">Entrar</button>
+        </div>
+        <div id="public-link-card" class="cloud-callout" hidden>
+          <div><strong>Link público</strong><span id="public-link-text">Salve as configurações para gerar seu link.</span></div>
+          <button class="secondary" id="copy-public-link" type="button">Copiar link</button>
+        </div>
         <div class="settings-grid">
           <section class="panel">
             <h3>Informações e expediente</h3>
@@ -104,6 +150,7 @@
               </div>
               <label class="field"><span>Intervalo entre opções de horário</span><select id="settings-step" name="slotStep"><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="45">45 minutos</option><option value="60">1 hora</option></select></label>
               <fieldset class="field days-field"><legend>Dias de atendimento</legend><div class="week-days"><label><input type="checkbox" name="days" value="1"> Seg</label><label><input type="checkbox" name="days" value="2"> Ter</label><label><input type="checkbox" name="days" value="3"> Qua</label><label><input type="checkbox" name="days" value="4"> Qui</label><label><input type="checkbox" name="days" value="5"> Sex</label><label><input type="checkbox" name="days" value="6"> Sáb</label><label><input type="checkbox" name="days" value="0"> Dom</label></div></fieldset>
+              <label class="publish-check"><input id="settings-public" name="isPublic" type="checkbox"><span><strong>Aceitar reservas pelo link público</strong><small>Seu negócio e os serviços ativos poderão ser vistos por quem tiver o link.</small></span></label>
               <button class="primary" type="submit">Salvar informações</button>
             </form>
           </section>
@@ -123,7 +170,7 @@
         </div>
       </section>
 
-      <section class="plans">
+      <section class="plans" id="plans-section">
         <div class="plans-top"><div><p class="eyebrow">MODELO DE NEGÓCIO</p><h2>Planos para crescer junto</h2></div><p>Valores ilustrativos. Nenhuma cobrança está ativa.</p></div>
         <div class="plan-grid">
           <article class="plan"><div class="plan-title"><strong>Essencial</strong><span>Para começar</span></div><div class="price">R$ 19<small>/mês</small></div><ul><li>Link de reservas</li><li>Serviços e agenda online</li></ul></article>
@@ -132,9 +179,11 @@
       </section>
     </main>
 
-    <footer class="footer"><strong>AgendaLeve</strong><span>Protótipo em desenvolvimento. Dados locais, sem contas, sincronização, mensagens ou pagamentos.</span></footer>
+    <footer class="footer"><strong>AgendaLeve</strong><span>Modo local disponível sem conta. Ao entrar, sua agenda é sincronizada no backend protegido por RLS.</span></footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+  <script src="supabase-config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
