@@ -9,10 +9,14 @@ const DEFAULT_CONFIG = {
   closesAt: '19:00',
   slotStep: 30,
   days: [1, 2, 3, 4, 5],
-  services: [
-    { id: 'service-initial', name: 'Atendimento inicial', duration: 60, price: 0 }
-  ]
+  services: [{ id: 'service-initial', name: 'Atendimento inicial', duration: 60, price: 0 }],
+  isPublic: false,
+  slug: ''
 };
+
+const supabaseClient = window.AGENDALEVE_SUPABASE?.client || null;
+const publicSlug = new URLSearchParams(location.search).get('negocio')?.trim().toLowerCase() || '';
+const publicMode = Boolean(publicSlug);
 
 const configForm = document.querySelector('#settings-form');
 const serviceForm = document.querySelector('#service-form');
@@ -22,6 +26,20 @@ const bookingDate = document.querySelector('#booking-date');
 const bookingTime = document.querySelector('#booking-time');
 const bookingList = document.querySelector('#booking-list');
 const serviceList = document.querySelector('#service-list');
+const accountDialog = document.querySelector('#account-dialog');
+const accountOpenButton = document.querySelector('#account-open');
+const accountCloseButton = document.querySelector('#account-close');
+const accountForm = document.querySelector('#auth-form');
+const accountProfile = document.querySelector('#account-profile');
+const accountMessage = document.querySelector('#account-message');
+const syncStatus = document.querySelector('#sync-status');
+
+let currentUser = null;
+let currentBusiness = null;
+let activeConfig = readLocalConfig();
+let activeBookings = readLocalBookings();
+let availableSlotMap = new Map();
+let cloudLoading = false;
 
 function readJson(key, fallback) {
   try {
@@ -32,7 +50,7 @@ function readJson(key, fallback) {
   }
 }
 
-function readConfig() {
+function readLocalConfig() {
   const stored = readJson(STORAGE.config, {});
   return {
     ...DEFAULT_CONFIG,
@@ -42,11 +60,11 @@ function readConfig() {
   };
 }
 
-function writeConfig(config) {
+function writeLocalConfig(config) {
   localStorage.setItem(STORAGE.config, JSON.stringify(config));
 }
 
-function readBookings() {
+function readLocalBookings() {
   const stored = readJson(STORAGE.bookings, []);
   if (!Array.isArray(stored)) return [];
   return stored.map((booking, index) => ({
@@ -57,12 +75,14 @@ function readBookings() {
     date: booking.date,
     time: booking.time,
     duration: Number(booking.duration) || 60,
-    price: Number(booking.price) || 0
+    price: Number(booking.price) || 0,
+    status: booking.status || 'confirmed'
   }));
 }
 
-function writeBookings(bookings) {
+function writeLocalBookings(bookings) {
   localStorage.setItem(STORAGE.bookings, JSON.stringify(bookings));
+  activeBookings = bookings;
 }
 
 function escapeHtml(value = '') {
@@ -79,7 +99,7 @@ function showToast(message) {
 }
 
 function minutesOf(time) {
-  const [hours, minutes] = String(time).split(':').map(Number);
+  const [hours, minutes] = String(time).slice(0, 5).split(':').map(Number);
   return hours * 60 + minutes;
 }
 
@@ -89,11 +109,53 @@ function timeOf(minutes) {
   return `${hours}:${rest}`;
 }
 
+function localDateString(date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function slugify(value) {
+  return String(value || '')
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD').replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || 'agenda';
+}
+
+function currentConfig() {
+  return activeConfig || DEFAULT_CONFIG;
+}
+
+function currentBookings() {
+  return activeBookings || [];
+}
+
 function serviceById(id) {
-  return readConfig().services.find(service => service.id === id);
+  return currentConfig().services.find(service => service.id === id);
+}
+
+function formatDate(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {
+    weekday: 'short', day: '2-digit', month: 'short'
+  });
+}
+
+function inBusinessZone(iso, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timeZone || 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  }).formatToParts(new Date(iso));
+  const map = Object.fromEntries(parts.filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+  return {
+    date: `${map.year}-${map.month}-${map.day}`,
+    time: `${map.hour}:${map.minute}`
+  };
 }
 
 function switchView(name) {
+  if (publicMode && name !== 'reservas') name = 'reservas';
   document.querySelectorAll('[data-view]').forEach(button => {
     const active = button.dataset.view === name;
     button.classList.toggle('active', active);
@@ -107,23 +169,18 @@ function switchView(name) {
   if (name === 'configuracao') fillSettings();
 }
 
-function formatDate(date) {
-  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {
-    weekday: 'short', day: '2-digit', month: 'short'
-  });
-}
-
 function renderDashboard() {
-  const config = readConfig();
+  const config = currentConfig();
   const now = new Date();
-  const bookings = readBookings()
+  const bookings = currentBookings()
+    .filter(booking => booking.status !== 'cancelled')
     .filter(booking => new Date(`${booking.date}T${booking.time}:00`) >= now)
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
 
   document.querySelector('#business-name-card').textContent = config.businessName;
   document.querySelector('#stat-upcoming').textContent = String(bookings.length);
   document.querySelector('#stat-services').textContent = String(config.services.length);
-  document.querySelector('#stat-hours').textContent = `${config.opensAt}–${config.closesAt}`;
+  document.querySelector('#stat-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
 
   bookingList.innerHTML = bookings.length
     ? bookings.map(booking => `
@@ -132,11 +189,11 @@ function renderDashboard() {
         <div class="booking-info"><strong>${escapeHtml(booking.client)}</strong><span>${escapeHtml(booking.service)} · ${booking.duration} min</span></div>
         <button class="text-button" type="button" data-cancel="${escapeHtml(booking.id)}">Cancelar</button>
       </article>`).join('')
-    : '<div class="empty"><strong>Sua agenda começa aqui.</strong><span>Configure seus serviços e experimente uma reserva demonstrativa.</span></div>';
+    : '<div class="empty"><strong>Sua agenda começa aqui.</strong><span>Configure seus serviços e compartilhe seu link de reservas.</span></div>';
 }
 
 function fillSettings() {
-  const config = readConfig();
+  const config = currentConfig();
   configForm.elements.businessName.value = config.businessName;
   configForm.elements.opensAt.value = config.opensAt;
   configForm.elements.closesAt.value = config.closesAt;
@@ -144,11 +201,13 @@ function fillSettings() {
   configForm.querySelectorAll('[name="days"]').forEach(input => {
     input.checked = config.days.includes(Number(input.value));
   });
+  document.querySelector('#settings-public').checked = Boolean(config.isPublic);
   renderServices();
+  updateCloudUi();
 }
 
 function renderServices() {
-  const config = readConfig();
+  const config = currentConfig();
   serviceList.innerHTML = config.services.length
     ? config.services.map(service => `
       <article class="service-row">
@@ -159,7 +218,7 @@ function renderServices() {
 }
 
 function renderServiceOptions() {
-  const config = readConfig();
+  const config = currentConfig();
   const previous = bookingService.value;
   bookingService.innerHTML = config.services.length
     ? config.services.map(service => `<option value="${escapeHtml(service.id)}">${escapeHtml(service.name)} · ${service.duration} min · ${Number(service.price).toLocaleString('pt-BR', {style:'currency',currency:'BRL'})}</option>`).join('')
@@ -168,10 +227,13 @@ function renderServiceOptions() {
   const enabled = config.services.length > 0;
   bookingService.disabled = !enabled;
   bookingForm.querySelector('[type="submit"]').disabled = !enabled;
+
+  document.querySelector('#booking-business-name').textContent = config.businessName;
+  document.querySelector('#booking-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
 }
 
-function availableTimes(date, service) {
-  const config = readConfig();
+function availableTimesLocal(date, service) {
+  const config = currentConfig();
   if (!service || !date) return [];
   const selectedDate = new Date(`${date}T00:00:00`);
   if (!config.days.includes(selectedDate.getDay())) return [];
@@ -180,9 +242,9 @@ function availableTimes(date, service) {
   const close = minutesOf(config.closesAt);
   const duration = Number(service.duration);
   const today = new Date();
-  const isToday = date === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const isToday = date === localDateString(today);
   const nowMinutes = today.getHours() * 60 + today.getMinutes();
-  const bookings = readBookings().filter(booking => booking.date === date);
+  const bookings = currentBookings().filter(booking => booking.date === date && booking.status !== 'cancelled');
   const times = [];
 
   for (let start = open; start + duration <= close; start += Number(config.slotStep)) {
@@ -198,13 +260,39 @@ function availableTimes(date, service) {
   return times;
 }
 
-function refreshAvailability() {
-  const config = readConfig();
+async function fetchCloudAvailability(date, service) {
+  if (!supabaseClient || !currentBusiness?.slug || !service?.id || !date) return [];
+  const { data, error } = await supabaseClient.functions.invoke('booking-availability', {
+    body: { businessSlug: currentBusiness.slug, serviceId: service.id, date }
+  });
+  if (error) throw error;
+  availableSlotMap = new Map((data?.slots || []).map(slot => [slot.time, slot.startsAt]));
+  return (data?.slots || []).map(slot => slot.time);
+}
+
+async function refreshAvailability() {
+  const config = currentConfig();
   const service = serviceById(bookingService.value || config.services[0]?.id);
   const date = bookingDate.value;
   const dayName = date ? new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {weekday:'long'}) : '';
   const openDay = date && config.days.includes(new Date(`${date}T00:00:00`).getDay());
-  const times = availableTimes(date, service);
+
+  let times = [];
+  bookingTime.disabled = true;
+  bookingForm.querySelector('[type="submit"]').disabled = true;
+  bookingTime.innerHTML = '<option value="">Consultando horários…</option>';
+
+  try {
+    if (date && service && currentBusiness?.is_public && supabaseClient) {
+      times = await fetchCloudAvailability(date, service);
+    } else {
+      availableSlotMap = new Map();
+      times = availableTimesLocal(date, service);
+    }
+  } catch {
+    bookingTime.innerHTML = '<option value="">Não foi possível consultar agora</option>';
+    return;
+  }
 
   bookingTime.innerHTML = times.length
     ? times.map(time => `<option value="${time}">${time}</option>`).join('')
@@ -215,9 +303,6 @@ function refreshAvailability() {
   if (!date) bookingTime.firstElementChild.textContent = 'Escolha uma data';
   else if (!openDay) bookingTime.firstElementChild.textContent = `Sem atendimento: ${dayName}`;
   else if (!service) bookingTime.firstElementChild.textContent = 'Cadastre um serviço';
-
-  document.querySelector('#booking-business-name').textContent = config.businessName;
-  document.querySelector('#booking-hours').textContent = `${config.opensAt}–${config.closesAt}`;
 }
 
 function showBookingConfirmation(booking) {
@@ -234,6 +319,332 @@ function showBookingConfirmation(booking) {
   document.querySelector('#bookingConfirmation h2').focus();
 }
 
+function cloudConfigFromRows(business, hours, services) {
+  const firstHours = hours[0];
+  return {
+    businessName: business.name,
+    opensAt: firstHours?.opens_at?.slice(0, 5) || '08:00',
+    closesAt: firstHours?.closes_at?.slice(0, 5) || '19:00',
+    slotStep: Number(business.slot_interval_minutes) || 30,
+    days: hours.map(row => Number(row.weekday)).sort((a, b) => a - b),
+    services: services.filter(row => row.is_active !== false).map(row => ({
+      id: row.id,
+      name: row.name,
+      duration: Number(row.duration_minutes),
+      price: Number(row.price_cents) / 100
+    })),
+    isPublic: Boolean(business.is_public),
+    slug: business.slug
+  };
+}
+
+function cloudBookingsFromRows(rows, timeZone) {
+  return rows.map(row => {
+    const start = inBusinessZone(row.starts_at, timeZone);
+    const endMs = Date.parse(row.ends_at);
+    const startMs = Date.parse(row.starts_at);
+    return {
+      id: row.id,
+      client: row.client_name,
+      service: row.service_name,
+      serviceId: row.service_id,
+      date: start.date,
+      time: start.time,
+      duration: Math.round((endMs - startMs) / 60000),
+      price: Number(row.price_cents) / 100,
+      status: row.status
+    };
+  });
+}
+
+async function loadOwnerCloud() {
+  if (!supabaseClient || !currentUser) return;
+  cloudLoading = true;
+  updateAccountUi();
+
+  const { data: business, error } = await supabaseClient
+    .from('agendaleve_businesses')
+    .select('*')
+    .eq('owner_id', currentUser.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    showAccountMessage('Não foi possível carregar sua agenda.');
+    cloudLoading = false;
+    updateAccountUi();
+    return;
+  }
+
+  if (!business) {
+    currentBusiness = null;
+    activeConfig = { ...readLocalConfig(), services: readLocalConfig().services.filter(s => s.id !== 'service-initial') };
+    activeBookings = [];
+    cloudLoading = false;
+    renderAll();
+    updateAccountUi();
+    return;
+  }
+
+  currentBusiness = business;
+  const [hoursResult, servicesResult, bookingsResult] = await Promise.all([
+    supabaseClient.from('agendaleve_business_hours').select('*').eq('business_id', business.id).order('weekday'),
+    supabaseClient.from('agendaleve_services').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at'),
+    supabaseClient.from('agendaleve_bookings').select('*').eq('business_id', business.id).order('starts_at')
+  ]);
+
+  if (hoursResult.error || servicesResult.error || bookingsResult.error) {
+    showAccountMessage('Parte da agenda não pôde ser carregada.');
+  }
+
+  activeConfig = cloudConfigFromRows(business, hoursResult.data || [], servicesResult.data || []);
+  activeBookings = cloudBookingsFromRows(bookingsResult.data || [], business.timezone);
+  cloudLoading = false;
+  renderAll();
+  updateAccountUi();
+}
+
+async function loadPublicBusiness() {
+  if (!supabaseClient || !publicSlug) return;
+  const { data: business, error } = await supabaseClient
+    .from('agendaleve_businesses')
+    .select('*')
+    .eq('slug', publicSlug)
+    .eq('is_public', true)
+    .maybeSingle();
+
+  if (error || !business) {
+    document.querySelector('#booking-business-name').textContent = 'Agenda indisponível';
+    document.querySelector('#booking-mode-note').textContent = 'Este link de reservas não está disponível.';
+    bookingForm.hidden = true;
+    return;
+  }
+
+  currentBusiness = business;
+  const [hoursResult, servicesResult] = await Promise.all([
+    supabaseClient.from('agendaleve_business_hours').select('*').eq('business_id', business.id).order('weekday'),
+    supabaseClient.from('agendaleve_services').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at')
+  ]);
+
+  activeConfig = cloudConfigFromRows(business, hoursResult.data || [], servicesResult.data || []);
+  activeBookings = [];
+  document.querySelector('#public-mode-name').textContent = business.name;
+  document.querySelector('#business-name-card').textContent = business.name;
+  document.querySelector('#booking-mode-note').textContent = 'Os horários são consultados em tempo real e a reserva é validada no servidor.';
+  renderServiceOptions();
+  switchView('reservas');
+}
+
+async function saveCloudSettings(values, days) {
+  if (!currentUser || !supabaseClient) throw new Error('Entre na conta primeiro.');
+  const name = values.businessName.trim();
+  const payload = {
+    owner_id: currentUser.id,
+    name,
+    slot_interval_minutes: Number(values.slotStep),
+    is_public: Boolean(configForm.elements.isPublic.checked),
+    timezone: currentBusiness?.timezone || 'America/Sao_Paulo',
+    updated_at: new Date().toISOString()
+  };
+
+  let business = currentBusiness;
+  if (!business) {
+    payload.slug = `${slugify(name)}-${currentUser.id.slice(0, 6)}`;
+    const { data, error } = await supabaseClient.from('agendaleve_businesses').insert(payload).select('*').single();
+    if (error) throw error;
+    business = data;
+    currentBusiness = data;
+  } else {
+    const { data, error } = await supabaseClient
+      .from('agendaleve_businesses')
+      .update(payload)
+      .eq('id', business.id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    business = data;
+    currentBusiness = data;
+  }
+
+  const { error: deleteHoursError } = await supabaseClient
+    .from('agendaleve_business_hours')
+    .delete()
+    .eq('business_id', business.id);
+  if (deleteHoursError) throw deleteHoursError;
+
+  if (days.length) {
+    const rows = days.map(weekday => ({
+      business_id: business.id,
+      weekday,
+      opens_at: values.opensAt,
+      closes_at: values.closesAt
+    }));
+    const { error: hoursError } = await supabaseClient.from('agendaleve_business_hours').insert(rows);
+    if (hoursError) throw hoursError;
+  }
+
+  await loadOwnerCloud();
+}
+
+function updateAccountUi() {
+  accountOpenButton.disabled = !supabaseClient;
+  accountOpenButton.textContent = currentUser ? 'Minha conta' : 'Entrar / sincronizar';
+  syncStatus.innerHTML = currentUser
+    ? `<span class="demo-dot"></span> ${cloudLoading ? 'Sincronizando…' : 'Nuvem · ' + escapeHtml(currentUser.email || 'conectado')}`
+    : '<span class="demo-dot"></span> Modo local';
+
+  accountForm.hidden = !supabaseClient || Boolean(currentUser);
+  accountProfile.hidden = !currentUser;
+  if (currentUser) document.querySelector('#account-email').textContent = currentUser.email || 'Conta conectada';
+
+  updateCloudUi();
+}
+
+function updateCloudUi() {
+  const callout = document.querySelector('#cloud-callout');
+  const linkCard = document.querySelector('#public-link-card');
+  callout.hidden = Boolean(currentUser);
+  linkCard.hidden = !(currentUser && currentBusiness);
+  if (currentUser && currentBusiness) {
+    const url = new URL(location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('negocio', currentBusiness.slug);
+    document.querySelector('#public-link-text').textContent = currentBusiness.is_public
+      ? url.toString()
+      : 'Ative “Aceitar reservas pelo link público” e salve para liberar o link.';
+  }
+}
+
+function showAccountMessage(message) {
+  accountMessage.textContent = message;
+}
+
+function authErrorText(error) {
+  const message = String(error?.message || '').toLowerCase();
+  if (message.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+  if (message.includes('email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
+  if (message.includes('already registered')) return 'Este e-mail já possui conta.';
+  if (message.includes('password should be at least')) return 'Use uma senha com pelo menos 8 caracteres.';
+  return 'Não foi possível concluir. Confira os dados e tente novamente.';
+}
+
+function renderAll() {
+  fillSettings();
+  renderServices();
+  renderServiceOptions();
+  renderDashboard();
+  refreshAvailability();
+}
+
+function initAccount() {
+  document.querySelector('#cloud-callout-login').addEventListener('click', () => accountDialog.showModal());
+  accountOpenButton.addEventListener('click', () => accountDialog.showModal());
+  accountCloseButton.addEventListener('click', () => accountDialog.close());
+  accountDialog.addEventListener('click', event => {
+    if (event.target === accountDialog) accountDialog.close();
+  });
+
+  accountForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!supabaseClient) return;
+    const button = accountForm.querySelector('[type="submit"]');
+    button.disabled = true;
+    showAccountMessage('Entrando…');
+    try {
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email: accountForm.elements.email.value.trim(),
+        password: accountForm.elements.password.value
+      });
+      if (error) throw error;
+      showAccountMessage('Conta conectada.');
+    } catch (error) {
+      showAccountMessage(authErrorText(error));
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  document.querySelector('#sign-up').addEventListener('click', async () => {
+    if (!supabaseClient) return;
+    const email = accountForm.elements.email.value.trim();
+    const password = accountForm.elements.password.value;
+    if (!email || password.length < 8) {
+      showAccountMessage('Informe um e-mail e uma senha com pelo menos 8 caracteres.');
+      return;
+    }
+    const button = document.querySelector('#sign-up');
+    button.disabled = true;
+    showAccountMessage('Criando conta…');
+    try {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+      showAccountMessage(data.session ? 'Conta criada e conectada.' : 'Conta criada. Confirme o e-mail e depois entre.');
+    } catch (error) {
+      showAccountMessage(authErrorText(error));
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  document.querySelector('#reset-password').addEventListener('click', async () => {
+    if (!supabaseClient) return;
+    const email = accountForm.elements.email.value.trim();
+    if (!email) {
+      showAccountMessage('Informe seu e-mail primeiro.');
+      return;
+    }
+    try {
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.href.split('?')[0].split('#')[0]
+      });
+      if (error) throw error;
+      showAccountMessage('Se o e-mail estiver cadastrado, enviaremos um link de recuperação.');
+    } catch (error) {
+      showAccountMessage(authErrorText(error));
+    }
+  });
+
+  document.querySelector('#sign-out').addEventListener('click', async () => {
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.auth.signOut();
+    showAccountMessage(error ? 'Não foi possível sair.' : 'Você saiu da conta.');
+  });
+
+  if (!supabaseClient) {
+    showAccountMessage('Sincronização indisponível. O modo local continua funcionando.');
+    updateAccountUi();
+    return;
+  }
+
+  let activeUserId = null;
+  const setSession = session => {
+    const user = session?.user || null;
+    if (user?.id === activeUserId) return;
+    activeUserId = user?.id || null;
+    currentUser = user;
+    currentBusiness = null;
+
+    if (user) {
+      window.setTimeout(loadOwnerCloud, 0);
+    } else {
+      activeConfig = readLocalConfig();
+      activeBookings = readLocalBookings();
+      renderAll();
+    }
+    updateAccountUi();
+  };
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    window.setTimeout(() => setSession(session), 0);
+  });
+  supabaseClient.auth.getSession().then(({ data, error }) => {
+    if (error) showAccountMessage('Não foi possível verificar a sessão.');
+    else setSession(data.session);
+  });
+}
+
 document.querySelectorAll('[data-view]').forEach(button => {
   button.addEventListener('click', () => switchView(button.dataset.view));
 });
@@ -241,7 +652,7 @@ document.querySelectorAll('[data-go]').forEach(button => {
   button.addEventListener('click', () => switchView(button.dataset.go));
 });
 
-configForm.addEventListener('submit', event => {
+configForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!configForm.reportValidity()) return;
   const values = Object.fromEntries(new FormData(configForm));
@@ -255,94 +666,210 @@ configForm.addEventListener('submit', event => {
     return;
   }
 
-  const current = readConfig();
-  writeConfig({
+  if (currentUser) {
+    const button = configForm.querySelector('[type="submit"]');
+    button.disabled = true;
+    try {
+      await saveCloudSettings(values, days);
+      showToast('Configurações sincronizadas.');
+    } catch (error) {
+      console.error(error);
+      showToast('Não foi possível salvar na nuvem.');
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
+
+  const current = readLocalConfig();
+  activeConfig = {
     ...current,
     businessName: values.businessName.trim(),
     opensAt: values.opensAt,
     closesAt: values.closesAt,
     slotStep: Number(values.slotStep),
-    days
-  });
-  renderDashboard();
-  renderServiceOptions();
-  refreshAvailability();
-  showToast('Informações do negócio salvas neste navegador.');
+    days,
+    isPublic: false
+  };
+  writeLocalConfig(activeConfig);
+  renderAll();
+  showToast('Informações salvas neste dispositivo.');
 });
 
-serviceForm.addEventListener('submit', event => {
+serviceForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!serviceForm.reportValidity()) return;
   const values = Object.fromEntries(new FormData(serviceForm));
-  const current = readConfig();
-  current.services.push({
-    id: crypto.randomUUID?.() || `service-${Date.now()}`,
+  const service = {
     name: values.serviceName.trim(),
     duration: Number(values.duration),
     price: Number(values.price) || 0
-  });
-  writeConfig(current);
+  };
+
+  if (currentUser) {
+    if (!currentBusiness) {
+      showToast('Salve primeiro as informações do negócio.');
+      return;
+    }
+    const { data, error } = await supabaseClient.from('agendaleve_services').insert({
+      business_id: currentBusiness.id,
+      name: service.name,
+      duration_minutes: service.duration,
+      price_cents: Math.round(service.price * 100),
+      is_active: true
+    }).select('*').single();
+
+    if (error) {
+      showToast('Não foi possível adicionar o serviço.');
+      return;
+    }
+    activeConfig.services.push({
+      id: data.id,
+      name: data.name,
+      duration: Number(data.duration_minutes),
+      price: Number(data.price_cents) / 100
+    });
+  } else {
+    const current = readLocalConfig();
+    current.services.push({
+      id: crypto.randomUUID?.() || `service-${Date.now()}`,
+      ...service
+    });
+    activeConfig = current;
+    writeLocalConfig(current);
+  }
+
   serviceForm.reset();
   serviceForm.elements.duration.value = '30';
-  renderServices();
-  renderServiceOptions();
-  renderDashboard();
-  refreshAvailability();
+  renderAll();
   showToast('Serviço adicionado.');
 });
 
-serviceList.addEventListener('click', event => {
+serviceList.addEventListener('click', async event => {
   const button = event.target.closest('[data-remove-service]');
   if (!button) return;
   if (!window.confirm('Remover este serviço das próximas reservas? Os atendimentos já marcados serão mantidos.')) return;
-  const config = readConfig();
-  config.services = config.services.filter(service => service.id !== button.dataset.removeService);
-  writeConfig(config);
-  renderServices();
-  renderServiceOptions();
-  renderDashboard();
-  refreshAvailability();
+  const id = button.dataset.removeService;
+
+  if (currentUser) {
+    const { error } = await supabaseClient.from('agendaleve_services').update({ is_active: false }).eq('id', id);
+    if (error) {
+      showToast('Não foi possível remover o serviço.');
+      return;
+    }
+    activeConfig.services = activeConfig.services.filter(service => service.id !== id);
+  } else {
+    const config = readLocalConfig();
+    config.services = config.services.filter(service => service.id !== id);
+    activeConfig = config;
+    writeLocalConfig(config);
+  }
+
+  renderAll();
+  showToast('Serviço removido.');
 });
 
 bookingService.addEventListener('change', refreshAvailability);
 bookingDate.addEventListener('change', refreshAvailability);
 
-bookingForm.addEventListener('submit', event => {
+bookingForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!bookingForm.reportValidity()) return;
   const values = Object.fromEntries(new FormData(bookingForm));
-  const config = readConfig();
-  const service = config.services.find(item => item.id === values.serviceId);
+  const service = serviceById(values.serviceId);
   if (!service) {
     showToast('Escolha um serviço disponível.');
     return;
   }
-  const available = availableTimes(values.date, service);
-  if (!available.includes(values.time)) {
-    refreshAvailability();
-    showToast('Esse horário não está mais disponível. Escolha outro.');
+
+  const available = bookingTime.value;
+  if (!available) {
+    showToast('Escolha um horário disponível.');
     return;
   }
 
-  const bookings = readBookings();
-  bookings.push({
-    id: crypto.randomUUID?.() || `booking-${Date.now()}`,
-    client: values.client.trim(),
-    serviceId: service.id,
-    service: service.name,
-    duration: Number(service.duration),
-    price: Number(service.price),
-    date: values.date,
-    time: values.time
-  });
-  writeBookings(bookings);
-  showBookingConfirmation(bookings.at(-1));
-  bookingForm.reset();
-  bookingDate.min = localDateString(new Date());
-  bookingDate.value = '';
-  renderServiceOptions();
-  refreshAvailability();
-  renderDashboard();
+  const button = bookingForm.querySelector('[type="submit"]');
+  button.disabled = true;
+
+  try {
+    let booking;
+
+    if (currentBusiness?.is_public && supabaseClient) {
+      const startsAt = availableSlotMap.get(values.time);
+      if (!startsAt) {
+        await refreshAvailability();
+        throw new Error('slot_changed');
+      }
+      const { data, error } = await supabaseClient.functions.invoke('create-booking', {
+        body: {
+          businessSlug: currentBusiness.slug,
+          serviceId: service.id,
+          startsAt,
+          clientName: values.client.trim()
+        }
+      });
+      if (error) throw error;
+      booking = {
+        id: data?.bookingId || crypto.randomUUID?.() || String(Date.now()),
+        client: values.client.trim(),
+        serviceId: service.id,
+        service: service.name,
+        duration: Number(service.duration),
+        price: Number(service.price),
+        date: values.date,
+        time: values.time,
+        status: 'confirmed'
+      };
+      if (currentUser && !publicMode) activeBookings.push(booking);
+    } else if (currentUser && currentBusiness) {
+      const startDate = new Date(`${values.date}T${values.time}:00`);
+      const endDate = new Date(startDate.getTime() + Number(service.duration) * 60000);
+      const { data, error } = await supabaseClient.from('agendaleve_bookings').insert({
+        business_id: currentBusiness.id,
+        service_id: service.id,
+        client_name: values.client.trim(),
+        service_name: service.name,
+        price_cents: Math.round(Number(service.price) * 100),
+        starts_at: startDate.toISOString(),
+        ends_at: endDate.toISOString(),
+        status: 'confirmed'
+      }).select('*').single();
+      if (error) throw error;
+      booking = cloudBookingsFromRows([data], currentBusiness.timezone)[0];
+      activeBookings.push(booking);
+    } else {
+      const times = availableTimesLocal(values.date, service);
+      if (!times.includes(values.time)) throw new Error('slot_changed');
+      booking = {
+        id: crypto.randomUUID?.() || `booking-${Date.now()}`,
+        client: values.client.trim(),
+        serviceId: service.id,
+        service: service.name,
+        duration: Number(service.duration),
+        price: Number(service.price),
+        date: values.date,
+        time: values.time,
+        status: 'confirmed'
+      };
+      const bookings = readLocalBookings();
+      bookings.push(booking);
+      writeLocalBookings(bookings);
+    }
+
+    showBookingConfirmation(booking);
+    bookingForm.reset();
+    bookingDate.min = localDateString(new Date());
+    bookingDate.value = '';
+    renderServiceOptions();
+    renderDashboard();
+    await refreshAvailability();
+  } catch (error) {
+    console.error(error);
+    await refreshAvailability();
+    showToast('Esse horário pode ter acabado de ser reservado. Escolha outro.');
+  } finally {
+    button.disabled = false;
+  }
 });
 
 document.querySelector('#copyConfirmation').addEventListener('click', async () => {
@@ -365,29 +892,75 @@ document.querySelector('#newBooking').addEventListener('click', () => {
   document.querySelector('#bookingFormLayout').hidden = false;
 });
 
-bookingList.addEventListener('click', event => {
+bookingList.addEventListener('click', async event => {
   const button = event.target.closest('[data-cancel]');
   if (!button) return;
-  if (!window.confirm('Cancelar este horário da demonstração?')) return;
-  writeBookings(readBookings().filter(booking => booking.id !== button.dataset.cancel));
+  if (!window.confirm('Cancelar este horário?')) return;
+  const id = button.dataset.cancel;
+
+  if (currentUser) {
+    const { error } = await supabaseClient.from('agendaleve_bookings').update({ status: 'cancelled' }).eq('id', id);
+    if (error) {
+      showToast('Não foi possível cancelar.');
+      return;
+    }
+    activeBookings = activeBookings.map(item => item.id === id ? { ...item, status: 'cancelled' } : item);
+  } else {
+    writeLocalBookings(readLocalBookings().filter(booking => booking.id !== id));
+  }
+
   renderDashboard();
-  renderServiceOptions();
   refreshAvailability();
   showToast('Agendamento cancelado.');
 });
 
-function localDateString(date) {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
+document.querySelector('#copy-public-link').addEventListener('click', async () => {
+  if (!currentBusiness?.is_public) {
+    showToast('Ative o link público e salve primeiro.');
+    return;
+  }
+  const url = new URL(location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('negocio', currentBusiness.slug);
+  try {
+    await navigator.clipboard.writeText(url.toString());
+    showToast('Link público copiado.');
+  } catch {
+    showToast('Não foi possível copiar o link.');
+  }
+});
+
+function initializeLocal() {
+  if (!localStorage.getItem(STORAGE.config)) writeLocalConfig(DEFAULT_CONFIG);
+  activeConfig = readLocalConfig();
+  activeBookings = readLocalBookings();
+  bookingDate.min = localDateString(new Date());
+  renderAll();
 }
 
-function initialize() {
-  if (!localStorage.getItem(STORAGE.config)) writeConfig(DEFAULT_CONFIG);
+async function initialize() {
   bookingDate.min = localDateString(new Date());
-  fillSettings();
-  renderServiceOptions();
-  renderDashboard();
-  refreshAvailability();
+
+  if (publicMode) {
+    document.querySelector('#account-open').hidden = true;
+    document.querySelector('#sync-status').innerHTML = '<span class="demo-dot"></span> Reserva online';
+    document.querySelector('#main-tabs').hidden = true;
+    document.querySelector('#view-agenda').hidden = true;
+    document.querySelector('#view-configuracao').hidden = true;
+    document.querySelector('#plans-section').hidden = true;
+    document.querySelector('#public-mode-banner').hidden = false;
+    document.querySelector('#view-reservas').hidden = false;
+    if (supabaseClient) await loadPublicBusiness();
+    else {
+      document.querySelector('#booking-business-name').textContent = 'Agenda indisponível';
+      bookingForm.hidden = true;
+    }
+    return;
+  }
+
+  initializeLocal();
+  initAccount();
 }
 
 initialize();
