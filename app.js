@@ -5,6 +5,7 @@ const STORAGE = {
 
 const DEFAULT_CONFIG = {
   businessName: 'Meu negócio',
+  brandColor: '#1f6a4a',
   opensAt: '08:00',
   closesAt: '19:00',
   slotStep: 30,
@@ -547,6 +548,15 @@ function slugify(value) {
     .slice(0, 48) || 'agenda';
 }
 
+function normalizeBrandColor(value) {
+  const color = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : '#1f6a4a';
+}
+
+function applyBusinessBrand(color) {
+  document.documentElement.style.setProperty('--business-accent', normalizeBrandColor(color));
+}
+
 function currentConfig() {
   return activeConfig || DEFAULT_CONFIG;
 }
@@ -789,6 +799,7 @@ function renderDashboard() {
 function fillSettings() {
   const config = currentConfig();
   configForm.elements.businessName.value = config.businessName;
+  if (configForm.elements.brandColor) configForm.elements.brandColor.value = normalizeBrandColor(config.brandColor);
   configForm.elements.slotStep.value = String(config.slotStep);
   configForm.querySelectorAll('[name="dayEnabled"]').forEach(input => {
     const weekday = Number(input.value);
@@ -1211,6 +1222,7 @@ function cloudConfigFromRows(business, hours, services) {
   }]));
   return {
     businessName: business.name,
+    brandColor: normalizeBrandColor(business.brand_color),
     opensAt: firstHours?.opens_at?.slice(0, 5) || '08:00',
     closesAt: firstHours?.closes_at?.slice(0, 5) || '19:00',
     slotStep: Number(business.slot_interval_minutes) || 30,
@@ -1327,6 +1339,7 @@ async function loadPublicBusiness() {
 
   activeConfig = cloudConfigFromRows(business, hoursResult.data || [], servicesResult.data || []);
   activeBookings = [];
+  applyBusinessBrand(activeConfig.brandColor);
   document.querySelector('#public-mode-name').textContent = business.name;
   document.querySelector('#business-name-card').textContent = business.name;
   document.querySelector('#booking-mode-note').textContent = 'Os horários são consultados em tempo real e a reserva é validada no servidor.';
@@ -1342,6 +1355,7 @@ async function saveCloudSettings(values, schedule) {
   const payload = {
     owner_id: currentUser.id,
     name,
+    brand_color: normalizeBrandColor(values.brandColor),
     slot_interval_minutes: Number(values.slotStep),
     is_public: Boolean(configForm.elements.isPublic.checked),
     timezone: currentBusiness?.timezone || 'America/Sao_Paulo',
@@ -1603,6 +1617,7 @@ configForm.addEventListener('submit', async event => {
   activeConfig = {
     ...current,
     businessName: values.businessName.trim(),
+    brandColor: normalizeBrandColor(values.brandColor),
     opensAt: first.opensAt,
     closesAt: first.closesAt,
     slotStep: Number(values.slotStep),
@@ -2166,6 +2181,7 @@ async function initialize() {
   bookingDate.min = localDateString(new Date());
 
   if (publicMode) {
+    document.body.classList.add('public-booking-mode');
     document.querySelector('#account-open').hidden = true;
     document.querySelector('#sync-status').innerHTML = '<span class="demo-dot"></span> Reserva online';
     document.querySelector('#main-tabs').hidden = true;
