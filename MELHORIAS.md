@@ -50,7 +50,7 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 
 - [ ] Mais de um profissional por negócio.
 - [ ] Agenda individual por profissional.
-- [ ] Bloqueios/folgas/férias.
+- [x] Bloqueios/folgas/férias com persistência local/nuvem e proteção nas Edge Functions de disponibilidade, reserva e reagendamento.
 - [ ] Serviços com buffers antes/depois.
 - [x] Branding do negócio na página pública com cor personalizada, preview no painel e persistência local/nuvem.
 - [ ] Foto/logo do negócio.
