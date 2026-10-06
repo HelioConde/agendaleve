@@ -89,6 +89,9 @@ jobs:
           grep -qi 'maskPhoneInput' app.js
           grep -qi 'prefers-reduced-motion' style.css
           grep -qi 'booking-search' index.html
+          grep -qi 'report-attendance' index.html
+          grep -qi 'bookingOperationsReport' app.js
+          grep -qi 'report-revenue' app.js
           grep -qi 'export-bookings' index.html
           grep -qi 'data-edit-service' app.js
           grep -qi 'no_show' app.js
