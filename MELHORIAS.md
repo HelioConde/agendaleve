@@ -55,8 +55,8 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 - [ ] Branding do negócio na página pública.
 - [ ] Foto/logo do negócio.
 - [ ] Pagamento/sinal opcional.
-- [ ] Relatório de comparecimento e cancelamentos.
-- [ ] Dashboard de receita estimada.
+- [x] Relatório de comparecimento e cancelamentos, com resumo dos últimos 30 dias.
+- [x] Dashboard de receita estimada com base em atendimentos concluídos nos últimos 30 dias.
 - [ ] Domínio/link personalizado.
 - [x] PWA/instalação com manifest, service worker, cache de shell e prompt de instalação.
 - [x] Notificações push web opt-in para lembretes.
