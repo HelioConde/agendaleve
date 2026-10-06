@@ -86,3 +86,8 @@ Consulte [VALIDACAO_BETA.md](./VALIDACAO_BETA.md). O produto já coleta eventos 
 ## PWA e operação beta
 
 O AgendaLeve é instalável como PWA quando o navegador oferece o prompt. O service worker mantém o shell básico disponível e também recebe notificações push. Proprietários autenticados podem enviar uma notificação de teste e acompanhar, no painel beta, reservas iniciadas, concluídas, conversão e nota média dos últimos 30 dias.
+
+
+## Monetização por anúncios
+
+O modelo de planos/preços foi removido. O AgendaLeve está preparado para permanecer gratuito e usar anúncios responsivos em posições não críticas. A integração fica desativada até existirem Publisher ID e slots reais; consulte [ADS_SETUP.md](./ADS_SETUP.md).
