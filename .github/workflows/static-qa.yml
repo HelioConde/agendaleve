@@ -38,3 +38,6 @@ jobs:
           grep -qi 'supabase-config.js' index.html
           grep -qi 'name="phone"' index.html
           grep -qi 'clientPhone' supabase/functions/create-booking/index.ts
+          grep -qi 'booking-date-filter' index.html
+          grep -qi 'data-booking-action' app.js
+          grep -qi 'status-chip' style.css
