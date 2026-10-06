@@ -107,7 +107,7 @@ jobs:
           grep -qi 'beforeinstallprompt' app.js
           grep -qi 'beta-summary' app.js
           grep -qi 'push-test' app.js
-          grep -qi 'agendaleve-shell-v1' sw.js
+          grep -qi 'agendaleve-shell-v2' sw.js
           grep -qi 'ads-section' index.html
           grep -qi 'data-ad-placement="owner-footer"' index.html
           grep -qi 'data-ad-placement="public-footer"' index.html
