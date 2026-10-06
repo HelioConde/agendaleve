@@ -8,6 +8,7 @@ create table public.businesses (
   slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   name text not null check (char_length(trim(name)) between 1 and 80),
   timezone text not null default 'America/Sao_Paulo',
+  slot_interval_minutes smallint not null default 30 check (slot_interval_minutes between 5 and 240),
   is_public boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -75,7 +76,7 @@ alter table public.bookings enable row level security;
 alter table public.booking_rate_limits enable row level security;
 
 -- Only the columns required for the public booking page are readable without login.
-grant select (id, slug, name, timezone) on public.businesses to anon;
+grant select (id, slug, name, timezone, slot_interval_minutes) on public.businesses to anon;
 grant select (business_id, weekday, opens_at, closes_at) on public.business_hours to anon;
 grant select (id, business_id, name, duration_minutes, price_cents) on public.services to anon;
 grant select, insert, update, delete on public.businesses, public.business_hours, public.services, public.bookings to authenticated;
@@ -229,6 +230,7 @@ begin
 
   if v_local_start::date < (now() at time zone v_business.timezone)::date
      or v_local_start::date <> v_local_end::date
+     or date_trunc('minute', v_local_start) <> v_local_start
      or not exists (
        select 1
        from public.business_hours h
@@ -236,6 +238,7 @@ begin
          and h.weekday = v_weekday
          and v_local_start::time >= h.opens_at
          and v_local_end::time <= h.closes_at
+         and mod((extract(epoch from (v_local_start::time - h.opens_at)) / 60)::integer, v_business.slot_interval_minutes) = 0
      ) then
     raise exception 'Time unavailable' using errcode = '22023';
   end if;
