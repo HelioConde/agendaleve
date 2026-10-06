@@ -35,6 +35,26 @@ test('mantém PT-BR como padrão e permite alternar para inglês com persistênc
   await expect(page.getByRole('heading', { name: /Mais tempo atendendo/i })).toBeVisible();
 });
 
+test('relatório de 30 dias calcula comparecimento, cancelamentos e receita estimada', async ({ page }) => {
+  await page.evaluate(() => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    const date = local.toISOString().slice(0, 10);
+    localStorage.setItem('agendaleve-bookings', JSON.stringify([
+      { id: 'report-1', client: 'Cliente A', service: 'Serviço A', duration: 30, price: 120, date, time: '09:00', status: 'completed' },
+      { id: 'report-2', client: 'Cliente B', service: 'Serviço B', duration: 30, price: 80, date, time: '10:00', status: 'completed' },
+      { id: 'report-3', client: 'Cliente C', service: 'Serviço C', duration: 30, price: 60, date, time: '11:00', status: 'no_show' },
+      { id: 'report-4', client: 'Cliente D', service: 'Serviço D', duration: 30, price: 50, date, time: '12:00', status: 'cancelled' }
+    ]));
+  });
+  await page.reload();
+
+  await expect(page.locator('#report-attendance')).toHaveText('67%');
+  await expect(page.locator('#report-no-show')).toHaveText('1');
+  await expect(page.locator('#report-cancelled')).toHaveText('1');
+  await expect(page.locator('#report-revenue')).toContainText('200,00');
+});
+
 test('configura expediente, edita serviço, reserva e encontra cliente na agenda', async ({ page }) => {
   await page.getByRole('button', { name: 'Configurar negócio' }).click();
 
