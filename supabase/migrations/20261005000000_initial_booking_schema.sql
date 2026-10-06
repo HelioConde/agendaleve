@@ -76,11 +76,7 @@ alter table public.agendaleve_services enable row level security;
 alter table public.agendaleve_bookings enable row level security;
 alter table public.agendaleve_booking_rate_limits enable row level security;
 
--- Only the columns required for the public booking page are readable without login.
-grant select (id, slug, name, timezone, slot_interval_minutes, is_public) on public.agendaleve_businesses to anon;
-grant select (business_id, weekday, opens_at, closes_at) on public.agendaleve_business_hours to anon;
-grant select (id, business_id, name, duration_minutes, price_cents) on public.agendaleve_services to anon;
-grant select, insert, update, delete on public.agendaleve_businesses, public.agendaleve_business_hours, public.agendaleve_services, public.agendaleve_bookings to authenticated;
+-- Keep the schema reachable but grant no table access yet. Add narrow grants only during reviewed app integration.
 grant usage on schema public to anon, authenticated;
 
 create policy "Public can view active agendaleve_businesses"
