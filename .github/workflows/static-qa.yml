@@ -24,6 +24,7 @@ jobs:
           test -f style.css
           test -f README.md
           test -f FULLSTACK.md
+          test -f MELHORIAS.md
           test -f supabase/functions/create-booking/index.ts
           test -f supabase/functions/booking-availability/index.ts
           test -f supabase/functions/cancel-booking/index.ts
@@ -59,3 +60,9 @@ jobs:
           grep -qi '2026-10 visual system refresh' style.css
           grep -qi -- '--accent: #1f6a4a' style.css
           grep -qi -- '--sand: #f1ece2' style.css
+          grep -qi 'SoftwareApplication' index.html
+          grep -qi 'setup-card' index.html
+          grep -qi 'renderSetupProgress' app.js
+          grep -qi 'formatPrice' app.js
+          grep -qi 'maskPhoneInput' app.js
+          grep -qi 'prefers-reduced-motion' style.css
