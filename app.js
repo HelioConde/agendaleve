@@ -39,6 +39,14 @@ const accountForm = document.querySelector('#auth-form');
 const accountProfile = document.querySelector('#account-profile');
 const accountMessage = document.querySelector('#account-message');
 const syncStatus = document.querySelector('#sync-status');
+const introSection = document.querySelector('#intro-section');
+const plansSection = document.querySelector('#plans-section');
+const bookingSummaryService = document.querySelector('#booking-summary-service');
+const bookingSummaryDuration = document.querySelector('#booking-summary-duration');
+const bookingSummaryPrice = document.querySelector('#booking-summary-price');
+const bookingSummaryDate = document.querySelector('#booking-summary-date');
+const bookingSummaryTime = document.querySelector('#booking-summary-time');
+const bookingSummaryHelp = document.querySelector('#booking-summary-help');
 
 let currentUser = null;
 let currentBusiness = null;
@@ -186,7 +194,15 @@ function switchView(name) {
   document.querySelectorAll('.view').forEach(view => {
     view.hidden = view.id !== `view-${name}`;
   });
-  if (name === 'reservas') refreshAvailability();
+
+  const ownerDashboard = name === 'agenda' && !publicMode;
+  if (introSection) introSection.hidden = !ownerDashboard;
+  if (plansSection) plansSection.hidden = !ownerDashboard;
+
+  if (name === 'reservas') {
+    updateBookingSummary();
+    refreshAvailability();
+  }
   if (name === 'configuracao') fillSettings();
 }
 
@@ -294,6 +310,7 @@ function renderServiceOptions() {
 
   document.querySelector('#booking-business-name').textContent = config.businessName;
   document.querySelector('#booking-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
+  updateBookingSummary();
 }
 
 function availableTimesLocal(date, service) {
@@ -334,6 +351,42 @@ async function fetchCloudAvailability(date, service) {
   return (data?.slots || []).map(slot => slot.time);
 }
 
+async function formatBookingSummaryDate(date) {
+  if (!date) return 'Escolha uma data';
+  const parsed = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return 'Escolha uma data';
+  return parsed.toLocaleDateString('pt-BR', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short'
+  }).replace('.', '');
+}
+
+function updateBookingSummary() {
+  const config = currentConfig();
+  const service = serviceById(bookingService.value || config.services[0]?.id);
+  const date = bookingDate.value;
+  const time = bookingTime.value;
+
+  bookingSummaryService.textContent = service?.name || 'Escolha um serviço';
+  bookingSummaryDuration.textContent = service ? `${service.duration} min` : '—';
+  bookingSummaryPrice.textContent = service
+    ? Number(service.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    : '—';
+  bookingSummaryDate.textContent = formatBookingSummaryDate(date);
+  bookingSummaryTime.textContent = time || '—';
+
+  if (!service) {
+    bookingSummaryHelp.textContent = 'Cadastre ou escolha um serviço para começar.';
+  } else if (!date) {
+    bookingSummaryHelp.textContent = 'Agora escolha uma data para consultar os horários disponíveis.';
+  } else if (!time) {
+    bookingSummaryHelp.textContent = 'Escolha um horário disponível para concluir a reserva.';
+  } else {
+    bookingSummaryHelp.textContent = 'Confira os dados ao lado e preencha seu nome e telefone para reservar.';
+  }
+}
+
 async function refreshAvailability() {
   const config = currentConfig();
   const service = serviceById(bookingService.value || config.services[0]?.id);
@@ -367,6 +420,8 @@ async function refreshAvailability() {
   if (!date) bookingTime.firstElementChild.textContent = 'Escolha uma data';
   else if (!openDay) bookingTime.firstElementChild.textContent = `Sem atendimento: ${dayName}`;
   else if (!service) bookingTime.firstElementChild.textContent = 'Cadastre um serviço';
+
+  updateBookingSummary();
 }
 
 function bookingManagementUrl(booking) {
@@ -872,6 +927,7 @@ serviceList.addEventListener('click', async event => {
 
 bookingService.addEventListener('change', refreshAvailability);
 bookingDate.addEventListener('change', refreshAvailability);
+bookingTime.addEventListener('change', updateBookingSummary);
 
 bookingForm.addEventListener('submit', async event => {
   event.preventDefault();
@@ -1115,7 +1171,8 @@ async function initialize() {
     document.querySelector('#main-tabs').hidden = true;
     document.querySelector('#view-agenda').hidden = true;
     document.querySelector('#view-configuracao').hidden = true;
-    document.querySelector('#plans-section').hidden = true;
+    introSection.hidden = true;
+    plansSection.hidden = true;
     document.querySelector('#public-mode-banner').hidden = false;
     document.querySelector('#view-reservas').hidden = false;
     if (customerCancelMode) {
