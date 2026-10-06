@@ -134,7 +134,7 @@ Deno.serve(async (request: Request) => {
   });
   const windowEpoch = Math.floor(Date.now() / 600_000) * 600;
   const windowStart = new Date(windowEpoch * 1000).toISOString();
-  const { data: allowed, error: limitError } = await client.rpc("consume_booking_rate_limit", {
+  const { data: allowed, error: limitError } = await client.rpc("agendaleve_consume_booking_rate_limit", {
     p_ip_hash: await hashIp(forwarded),
     p_window_start: windowStart,
   });
@@ -143,7 +143,7 @@ Deno.serve(async (request: Request) => {
     return json(status, { error: status === 429 ? "Muitas tentativas. Tente novamente em alguns minutos." : "Serviço temporariamente indisponível." }, origin);
   }
 
-  const { data, error } = await client.rpc("create_public_booking", {
+  const { data, error } = await client.rpc("agendaleve_create_public_booking", {
     p_business_slug: businessSlug,
     p_service_id: serviceId,
     p_starts_at: new Date(startsAt).toISOString(),
