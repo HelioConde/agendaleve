@@ -350,6 +350,8 @@
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));
   let activeLocale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'pt-BR';
   let applying = false;
+  const originalText = new WeakMap();
+  const originalAttributes = new WeakMap();
 
   function dynamicTranslate(value,target){
     if(target==='en'){
@@ -402,8 +404,15 @@
       if(root.nodeType===Node.TEXT_NODE){
         const parent=root.parentElement;
         if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)) return;
-        const next=translateValue(root.nodeValue);
-        if(next!==root.nodeValue) root.nodeValue=next;
+        if(activeLocale==='pt-BR'&&originalText.has(root)){
+          root.nodeValue=originalText.get(root);
+        }else{
+          const next=translateValue(root.nodeValue);
+          if(next!==root.nodeValue){
+            if(!originalText.has(root)) originalText.set(root,root.nodeValue);
+            root.nodeValue=next;
+          }
+        }
         return;
       }
       if(root.nodeType!==Node.ELEMENT_NODE&&root!==document) return;
@@ -413,16 +422,32 @@
       while((node=walker.nextNode())){
         const parent=node.parentElement;
         if(!parent||['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)) continue;
-        const next=translateValue(node.nodeValue);
-        if(next!==node.nodeValue) node.nodeValue=next;
+        if(activeLocale==='pt-BR'&&originalText.has(node)){
+          node.nodeValue=originalText.get(node);
+        }else{
+          const next=translateValue(node.nodeValue);
+          if(next!==node.nodeValue){
+            if(!originalText.has(node)) originalText.set(node,node.nodeValue);
+            node.nodeValue=next;
+          }
+        }
       }
       const elements=[element,...(element.querySelectorAll?.('[placeholder],[aria-label],[title]')||[])];
       elements.forEach(el=>{
         ['placeholder','aria-label','title'].forEach(attr=>{
           if(!el?.hasAttribute?.(attr)) return;
           const before=el.getAttribute(attr);
-          const after=translateValue(before);
-          if(after!==before) el.setAttribute(attr,after);
+          let saved=originalAttributes.get(el);
+          if(!saved){saved={};originalAttributes.set(el,saved);}
+          if(activeLocale==='pt-BR'&&saved[attr]!=null){
+            el.setAttribute(attr,saved[attr]);
+          }else{
+            const after=translateValue(before);
+            if(after!==before){
+              if(saved[attr]==null) saved[attr]=before;
+              el.setAttribute(attr,after);
+            }
+          }
         });
       });
     } finally { applying=false; }
