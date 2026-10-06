@@ -630,11 +630,11 @@ html[lang="en"] .tabs .tab{white-space:normal}
 .brand-color-field input[type="color"]{min-height:46px;padding:5px;cursor:pointer;background:#fff}
 .brand-color-field input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
 .brand-color-field input[type="color"]::-webkit-color-swatch{border:0;border-radius:7px}
-.public-booking-mode #view-reservas .primary{background:var(--business-accent);color:var(--business-accent-text)}
-.public-booking-mode #view-reservas .primary:hover{background:color-mix(in srgb,var(--business-accent) 88%,#000)}
-.public-booking-mode #view-reservas .aside-icon{background:var(--business-accent);color:var(--business-accent-text)}
-.public-booking-mode #view-reservas .aside-eyebrow,
-.public-booking-mode #view-reservas .booking-panel h3{color:var(--business-accent)}
-.public-booking-mode #view-reservas .booking-aside{border-color:color-mix(in srgb,var(--business-accent) 24%,#dce8de);background:color-mix(in srgb,var(--business-accent) 8%,#fff)}
+.booking-customer-view #view-reservas .primary{background:var(--business-accent);color:var(--business-accent-text)}
+.booking-customer-view #view-reservas .primary:hover{background:color-mix(in srgb,var(--business-accent) 88%,#000)}
+.booking-customer-view #view-reservas .aside-icon{background:var(--business-accent);color:var(--business-accent-text)}
+.booking-customer-view #view-reservas .aside-eyebrow,
+.booking-customer-view #view-reservas .booking-panel h3{color:var(--business-accent)}
+.booking-customer-view #view-reservas .booking-aside{border-color:color-mix(in srgb,var(--business-accent) 24%,#dce8de);background:color-mix(in srgb,var(--business-accent) 8%,#fff)}
 .public-booking-mode .public-mode-banner{border-left:4px solid var(--business-accent)}
-.public-booking-mode .booking-confirmation .confirmation-check{background:color-mix(in srgb,var(--business-accent) 12%,#fff);color:var(--business-accent)}
+.booking-customer-view .booking-confirmation .confirmation-check{background:color-mix(in srgb,var(--business-accent) 12%,#fff);color:var(--business-accent)}
