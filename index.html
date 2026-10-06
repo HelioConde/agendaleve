@@ -221,12 +221,20 @@
             <p class="sub">Defina como seu negócio aparece e em quais horários atende.</p>
             <form id="settings-form">
               <label class="field"><span>Nome do negócio</span><input id="settings-business-name" name="businessName" maxlength="80" required></label>
-              <div class="field-row">
-                <label class="field"><span>Abre às</span><input id="settings-opens" name="opensAt" type="time" required></label>
-                <label class="field"><span>Fecha às</span><input id="settings-closes" name="closesAt" type="time" required></label>
-              </div>
               <label class="field"><span>Intervalo entre opções de horário</span><select id="settings-step" name="slotStep"><option value="15">15 minutos</option><option value="30">30 minutos</option><option value="45">45 minutos</option><option value="60">1 hora</option></select></label>
-              <fieldset class="field days-field"><legend>Dias de atendimento</legend><div class="week-days"><label><input type="checkbox" name="days" value="1"> Seg</label><label><input type="checkbox" name="days" value="2"> Ter</label><label><input type="checkbox" name="days" value="3"> Qua</label><label><input type="checkbox" name="days" value="4"> Qui</label><label><input type="checkbox" name="days" value="5"> Sex</label><label><input type="checkbox" name="days" value="6"> Sáb</label><label><input type="checkbox" name="days" value="0"> Dom</label></div></fieldset>
+              <fieldset class="field weekly-hours-field">
+                <legend>Expediente por dia</legend>
+                <p class="field-help">Ative somente os dias em que atende e ajuste abertura e fechamento individualmente.</p>
+                <div class="weekly-hours" id="weekly-hours">
+                  <div class="weekly-hours-row" data-weekday="1"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="1"><span>Segunda</span></label><label><span>Abre</span><input type="time" data-day-open="1"></label><label><span>Fecha</span><input type="time" data-day-close="1"></label></div>
+                  <div class="weekly-hours-row" data-weekday="2"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="2"><span>Terça</span></label><label><span>Abre</span><input type="time" data-day-open="2"></label><label><span>Fecha</span><input type="time" data-day-close="2"></label></div>
+                  <div class="weekly-hours-row" data-weekday="3"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="3"><span>Quarta</span></label><label><span>Abre</span><input type="time" data-day-open="3"></label><label><span>Fecha</span><input type="time" data-day-close="3"></label></div>
+                  <div class="weekly-hours-row" data-weekday="4"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="4"><span>Quinta</span></label><label><span>Abre</span><input type="time" data-day-open="4"></label><label><span>Fecha</span><input type="time" data-day-close="4"></label></div>
+                  <div class="weekly-hours-row" data-weekday="5"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="5"><span>Sexta</span></label><label><span>Abre</span><input type="time" data-day-open="5"></label><label><span>Fecha</span><input type="time" data-day-close="5"></label></div>
+                  <div class="weekly-hours-row" data-weekday="6"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="6"><span>Sábado</span></label><label><span>Abre</span><input type="time" data-day-open="6"></label><label><span>Fecha</span><input type="time" data-day-close="6"></label></div>
+                  <div class="weekly-hours-row" data-weekday="0"><label class="day-toggle"><input type="checkbox" name="dayEnabled" value="0"><span>Domingo</span></label><label><span>Abre</span><input type="time" data-day-open="0"></label><label><span>Fecha</span><input type="time" data-day-close="0"></label></div>
+                </div>
+              </fieldset>
               <label class="publish-check"><input id="settings-public" name="isPublic" type="checkbox"><span><strong>Aceitar reservas pelo link público</strong><small>Seu negócio e os serviços ativos poderão ser vistos por quem tiver o link.</small></span></label>
               <button class="primary" type="submit">Salvar informações</button>
             </form>
