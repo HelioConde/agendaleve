@@ -31,6 +31,10 @@
     <header class="topbar">
       <a class="brand" href="./" aria-label="AgendaLeve, início">AgendaLeve<span>.</span></a>
       <div class="topbar-actions">
+        <div class="language-switcher" role="group" aria-label="Idioma / Language">
+          <button type="button" data-language="pt-BR" class="active" aria-pressed="true">PT</button>
+          <button type="button" data-language="en" aria-pressed="false">EN</button>
+        </div>
         <span id="sync-status" class="topbar-note" role="status"><span class="demo-dot"></span> Modo local</span>
         <button id="account-open" class="secondary compact" type="button">Entrar / sincronizar</button>
       </div>
@@ -351,6 +355,7 @@
   <script src="supabase-config.js"></script>
   <script src="ads-config.js"></script>
   <script src="ads.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
