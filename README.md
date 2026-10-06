@@ -15,9 +15,12 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - filtros da agenda por período e status;
 - ações rápidas para confirmar, concluir e cancelar atendimentos;
 - cancelamento seguro pelo cliente através de link privado com token;
+- reagendamento pelo próprio cliente, sem login e sem expor dados privados;
+- consulta de disponibilidade que desconsidera a própria reserva durante o reagendamento;
 - Edge Function `booking-availability` sem exposição de dados privados;
 - Edge Function `create-booking` com validação, rate limit, token de cancelamento e prevenção de conflitos;
 - Edge Function `cancel-booking` para cancelamento sem login, validado por token;
+- Edge Functions `booking-manage` e `reschedule-booking` para gestão segura da reserva pelo cliente;
 - RLS separando proprietário, visitante público e reservas privadas;
 - GitHub Pages + CI;
 - SEO básico.
