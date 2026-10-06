@@ -35,6 +35,7 @@ jobs:
           test -f supabase/migrations/20261006043000_booking_contact.sql
           test -f supabase/migrations/20261006050000_customer_cancellation.sql
           test -f supabase/migrations/20261006070000_customer_reschedule.sql
+          test -f supabase/migrations/20261006074500_booking_no_show_status.sql
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -66,3 +67,8 @@ jobs:
           grep -qi 'formatPrice' app.js
           grep -qi 'maskPhoneInput' app.js
           grep -qi 'prefers-reduced-motion' style.css
+          grep -qi 'booking-search' index.html
+          grep -qi 'export-bookings' index.html
+          grep -qi 'data-edit-service' app.js
+          grep -qi 'no_show' app.js
+          grep -qi 'exportBookingsCsv' app.js
