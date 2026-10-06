@@ -34,6 +34,23 @@ async function hashIp(ip: string) {
   return hashText(ip);
 }
 
+async function validateTurnstile(secret: string, token: string, remoteip: string) {
+  if (!token || token.length > 2048) return false;
+  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      secret,
+      response: token,
+      remoteip,
+      idempotency_key: crypto.randomUUID(),
+    }),
+  });
+  if (!response.ok) return false;
+  const result = await response.json();
+  return result?.success === true;
+}
+
 function generateCancelToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(24));
   return btoa(String.fromCharCode(...bytes))
@@ -125,6 +142,7 @@ Deno.serve(async (request: Request) => {
   const startsAt = typeof input.startsAt === "string" ? input.startsAt : "";
   const clientName = typeof input.clientName === "string" ? input.clientName.trim() : "";
   const clientPhone = typeof input.clientPhone === "string" ? input.clientPhone.trim() : "";
+  const turnstileToken = typeof input.turnstileToken === "string" ? input.turnstileToken.trim() : "";
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(businessSlug)
       || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(serviceId)
@@ -155,6 +173,21 @@ Deno.serve(async (request: Request) => {
   if (limitError || allowed !== true) {
     const status = limitError ? 503 : 429;
     return json(status, { error: status === 429 ? "Muitas tentativas. Tente novamente em alguns minutos." : "Serviço temporariamente indisponível." }, origin);
+  }
+
+  const { data: serverConfig, error: configError } = await client.rpc("agendaleve_get_server_config");
+  if (configError) return json(503, { error: "Serviço temporariamente indisponível." }, origin);
+  const turnstileSecret = String(serverConfig?.turnstile_secret || "");
+  if (turnstileSecret) {
+    let turnstileOk = false;
+    try {
+      turnstileOk = await validateTurnstile(turnstileSecret, turnstileToken, forwarded);
+    } catch {
+      return json(503, { error: "Não foi possível validar a proteção anti-bot agora." }, origin);
+    }
+    if (!turnstileOk) {
+      return json(403, { error: "Confirme que você não é um robô e tente novamente." }, origin);
+    }
   }
 
   const cancelToken = generateCancelToken();
