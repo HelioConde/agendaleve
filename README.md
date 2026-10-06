@@ -50,3 +50,8 @@ A identidade visual usa uma paleta de alto contraste e baixa saturação:
 - âmbar `#B5792A` apenas para pequenos sinais de atenção/status.
 
 O painel e a página pública compartilham os mesmos tokens, mas a página de reserva usa contraste mais suave para manter foco no formulário.
+
+
+## Roadmap
+
+A lista priorizada de melhorias e o estado de implementação ficam em [MELHORIAS.md](./MELHORIAS.md).
