@@ -378,6 +378,10 @@
   "Baixe um arquivo .ics compatível com os principais calendários.": "Download an .ics file compatible with major calendar apps.",
   "Evento de calendário baixado.": "Calendar event downloaded."
 });
+  Object.assign(translations, {
+  "Cor da página pública": "Public page color",
+  "Usada nos destaques e botões da página de reservas.": "Used for highlights and buttons on the booking page."
+});
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));
   let activeLocale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'pt-BR';
   let applying = false;
