@@ -139,6 +139,20 @@ function formatPhone(value) {
   return value || '';
 }
 
+function maskPhoneInput(value) {
+  const digits = String(value || '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '').slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function formatPrice(value) {
+  const amount = Number(value) || 0;
+  if (amount <= 0) return 'Grátis';
+  return amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
 function localDateString(date) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 10);
@@ -216,6 +230,64 @@ function bookingStatusLabel(status) {
   })[status] || 'Reserva';
 }
 
+function renderSetupProgress(config) {
+  const card = document.querySelector('#setup-card');
+  if (!card) return;
+
+  const hasBusiness = Boolean(currentBusiness) || String(config.businessName || '').trim().toLocaleLowerCase('pt-BR') !== 'meu negócio';
+  const hasService = config.services.some(service => service.id !== 'service-initial' || Number(service.price) > 0 || service.name !== 'Atendimento inicial');
+  const isPublic = Boolean(currentUser && currentBusiness?.is_public);
+  const states = [
+    ['#setup-business', hasBusiness],
+    ['#setup-service', hasService],
+    ['#setup-public', isPublic]
+  ];
+  const completed = states.filter(([, done]) => done).length;
+
+  states.forEach(([selector, done]) => {
+    const item = document.querySelector(selector);
+    item?.classList.toggle('done', done);
+    const marker = item?.querySelector('.setup-check');
+    if (marker) marker.textContent = done ? '✓' : marker.dataset.step || marker.textContent;
+  });
+
+  document.querySelectorAll('.setup-check').forEach((marker, index) => {
+    if (!marker.dataset.step) marker.dataset.step = String(index + 1);
+    if (!marker.closest('li')?.classList.contains('done')) marker.textContent = marker.dataset.step;
+  });
+
+  const progress = document.querySelector('#setup-progress-text');
+  if (progress) {
+    progress.textContent = completed === 3
+      ? 'Sua agenda está pronta para receber reservas pelo link público.'
+      : `${completed} de 3 etapas concluídas. Complete o restante para publicar sua agenda.`;
+  }
+
+  card.hidden = completed === 3;
+}
+
+function publicBookingUrl() {
+  if (!currentBusiness?.slug) return '';
+  const url = new URL(location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('negocio', currentBusiness.slug);
+  return url.toString();
+}
+
+async function copyPublicBookingLink() {
+  if (!currentBusiness?.is_public) {
+    showToast('Ative o link público e salve primeiro.');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(publicBookingUrl());
+    showToast('Link público copiado.');
+  } catch {
+    showToast('Não foi possível copiar o link.');
+  }
+}
+
 function renderDashboard() {
   const config = currentConfig();
   const now = new Date();
@@ -249,6 +321,7 @@ function renderDashboard() {
   document.querySelector('#stat-upcoming').textContent = String(upcomingActive.length);
   document.querySelector('#stat-services').textContent = String(config.services.length);
   document.querySelector('#stat-hours').textContent = config.days.length ? `${config.opensAt}–${config.closesAt}` : '—';
+  renderSetupProgress(config);
   const filterCount = document.querySelector('#booking-filter-count');
   if (filterCount) filterCount.textContent = bookings.length === 1 ? '1 agendamento neste filtro.' : `${bookings.length} agendamentos neste filtro.`;
 
@@ -270,7 +343,11 @@ function renderDashboard() {
         <div class="booking-actions">${actions}</div>
       </article>`;
     }).join('')
-    : '<div class="empty"><strong>Nenhum agendamento encontrado.</strong><span>Altere os filtros para consultar outros horários.</span></div>';
+    : `<div class="empty empty-with-action">
+        <strong>${allBookings.length ? 'Nenhum agendamento neste filtro.' : 'Sua agenda ainda está vazia.'}</strong>
+        <span>${allBookings.length ? 'Tente outro período ou status.' : 'Crie um atendimento manualmente ou publique seu link para receber a primeira reserva.'}</span>
+        <button class="secondary compact" type="button" data-empty-go="reservas">Agendar cliente</button>
+      </div>`;
 }
 
 function fillSettings() {
@@ -292,7 +369,7 @@ function renderServices() {
   serviceList.innerHTML = config.services.length
     ? config.services.map(service => `
       <article class="service-row">
-        <div><strong>${escapeHtml(service.name)}</strong><span>${service.duration} min · ${Number(service.price).toLocaleString('pt-BR', {style:'currency',currency:'BRL'})}</span></div>
+        <div><strong>${escapeHtml(service.name)}</strong><span>${service.duration} min · ${formatPrice(service.price)}</span></div>
         <button class="text-button danger" type="button" data-remove-service="${escapeHtml(service.id)}" aria-label="Remover ${escapeHtml(service.name)}">Remover</button>
       </article>`).join('')
     : '<div class="empty">Adicione ao menos um serviço para receber reservas.</div>';
@@ -302,7 +379,7 @@ function renderServiceOptions() {
   const config = currentConfig();
   const previous = bookingService.value;
   bookingService.innerHTML = config.services.length
-    ? config.services.map(service => `<option value="${escapeHtml(service.id)}">${escapeHtml(service.name)} · ${service.duration} min · ${Number(service.price).toLocaleString('pt-BR', {style:'currency',currency:'BRL'})}</option>`).join('')
+    ? config.services.map(service => `<option value="${escapeHtml(service.id)}">${escapeHtml(service.name)} · ${service.duration} min · ${formatPrice(service.price)}</option>`).join('')
     : '<option value="">Nenhum serviço cadastrado</option>';
   if (config.services.some(service => service.id === previous)) bookingService.value = previous;
   const enabled = config.services.length > 0;
@@ -355,7 +432,7 @@ async function fetchCloudAvailability(date, service, management = false) {
   return (data?.slots || []).map(slot => slot.time);
 }
 
-async function formatBookingSummaryDate(date) {
+function formatBookingSummaryDate(date) {
   if (!date) return 'Escolha uma data';
   const parsed = new Date(`${date}T12:00:00`);
   if (Number.isNaN(parsed.getTime())) return 'Escolha uma data';
@@ -374,9 +451,7 @@ function updateBookingSummary() {
 
   bookingSummaryService.textContent = service?.name || 'Escolha um serviço';
   bookingSummaryDuration.textContent = service ? `${service.duration} min` : '—';
-  bookingSummaryPrice.textContent = service
-    ? Number(service.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-    : '—';
+  bookingSummaryPrice.textContent = service ? formatPrice(service.price) : '—';
   bookingSummaryDate.textContent = formatBookingSummaryDate(date);
   bookingSummaryTime.textContent = time || '—';
 
@@ -764,17 +839,18 @@ function updateAccountUi() {
 function updateCloudUi() {
   const callout = document.querySelector('#cloud-callout');
   const linkCard = document.querySelector('#public-link-card');
+  const dashboardCopyLink = document.querySelector('#dashboard-copy-link');
   callout.hidden = Boolean(currentUser);
   linkCard.hidden = !(currentUser && currentBusiness);
+  if (dashboardCopyLink) dashboardCopyLink.hidden = !Boolean(currentUser && currentBusiness?.is_public);
+
   if (currentUser && currentBusiness) {
-    const url = new URL(location.href);
-    url.search = '';
-    url.hash = '';
-    url.searchParams.set('negocio', currentBusiness.slug);
     document.querySelector('#public-link-text').textContent = currentBusiness.is_public
-      ? url.toString()
+      ? publicBookingUrl()
       : 'Ative “Aceitar reservas pelo link público” e salve para liberar o link.';
   }
+
+  renderSetupProgress(currentConfig());
 }
 
 function showAccountMessage(message) {
@@ -1032,6 +1108,9 @@ serviceList.addEventListener('click', async event => {
 bookingService.addEventListener('change', refreshAvailability);
 bookingDate.addEventListener('change', refreshAvailability);
 bookingTime.addEventListener('change', updateBookingSummary);
+bookingForm.elements.phone.addEventListener('input', event => {
+  event.currentTarget.value = maskPhoneInput(event.currentTarget.value);
+});
 
 bookingForm.addEventListener('submit', async event => {
   event.preventDefault();
@@ -1238,6 +1317,12 @@ bookingDateFilter?.addEventListener('change', renderDashboard);
 bookingStatusFilter?.addEventListener('change', renderDashboard);
 
 bookingList.addEventListener('click', async event => {
+  const emptyAction = event.target.closest('[data-empty-go]');
+  if (emptyAction) {
+    switchView(emptyAction.dataset.emptyGo);
+    return;
+  }
+
   const button = event.target.closest('[data-booking-action]');
   if (!button) return;
   const action = button.dataset.bookingAction;
@@ -1279,22 +1364,8 @@ bookingList.addEventListener('click', async event => {
   showToast(messages[nextStatus]);
 });
 
-document.querySelector('#copy-public-link').addEventListener('click', async () => {
-  if (!currentBusiness?.is_public) {
-    showToast('Ative o link público e salve primeiro.');
-    return;
-  }
-  const url = new URL(location.href);
-  url.search = '';
-  url.hash = '';
-  url.searchParams.set('negocio', currentBusiness.slug);
-  try {
-    await navigator.clipboard.writeText(url.toString());
-    showToast('Link público copiado.');
-  } catch {
-    showToast('Não foi possível copiar o link.');
-  }
-});
+document.querySelector('#copy-public-link').addEventListener('click', copyPublicBookingLink);
+document.querySelector('#dashboard-copy-link').addEventListener('click', copyPublicBookingLink);
 
 function initializeLocal() {
   if (!localStorage.getItem(STORAGE.config)) writeLocalConfig(DEFAULT_CONFIG);
