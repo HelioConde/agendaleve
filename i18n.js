@@ -360,6 +360,19 @@
   "Cancelar": "Cancel",
   "Concluir": "Complete"
 });
+  Object.assign(translations, {
+  "DESEMPENHO": "PERFORMANCE",
+  "Últimos 30 dias": "Last 30 days",
+  "Baseado nos status da agenda": "Based on booking statuses",
+  "Comparecimento": "Attendance",
+  "concluídos ÷ concluídos + faltas": "completed ÷ completed + no-shows",
+  "Não compareceram": "No-shows",
+  "atendimentos marcados como falta": "appointments marked as no-show",
+  "Cancelamentos": "Cancellations",
+  "reservas canceladas no período": "bookings canceled in the period",
+  "Receita estimada": "Estimated revenue",
+  "somente atendimentos concluídos": "completed appointments only"
+});
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));
   let activeLocale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'pt-BR';
   let applying = false;
