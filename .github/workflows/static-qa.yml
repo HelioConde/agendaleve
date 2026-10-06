@@ -72,3 +72,6 @@ jobs:
           grep -qi 'data-edit-service' app.js
           grep -qi 'no_show' app.js
           grep -qi 'exportBookingsCsv' app.js
+          grep -qi 'weekly-hours' index.html
+          grep -qi 'hoursByDay' app.js
+          grep -qi 'hoursForDay' app.js
