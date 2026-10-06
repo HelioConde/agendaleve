@@ -49,7 +49,7 @@
     </dialog>
 
     <main>
-      <section class="intro">
+      <section class="intro" id="intro-section">
         <div>
           <p class="eyebrow">AGENDA ONLINE PARA NEGÓCIOS LOCAIS</p>
           <h1>Mais tempo atendendo.<br><span>Menos tempo organizando.</span></h1>
@@ -68,14 +68,14 @@
 
       <nav class="tabs" id="main-tabs" aria-label="Seções do AgendaLeve">
         <button class="tab active" type="button" data-view="agenda" aria-current="page">Minha agenda</button>
-        <button class="tab" type="button" data-view="reservas">Reservar horário</button>
+        <button class="tab" type="button" data-view="reservas">Página do cliente</button>
         <button class="tab" type="button" data-view="configuracao">Configurar negócio</button>
       </nav>
 
       <section class="view" id="view-agenda">
         <div class="view-heading">
           <div><p class="eyebrow">PAINEL DO NEGÓCIO</p><h2>Visão geral</h2></div>
-          <button class="primary compact" type="button" data-go="reservas">+ Novo agendamento</button>
+          <button class="primary compact" type="button" data-go="reservas">+ Agendar cliente</button>
         </div>
         <div class="stats" aria-label="Resumo da agenda">
           <article class="stat-card"><span>Próximos atendimentos</span><strong id="stat-upcoming">0</strong><small>horários futuros</small></article>
@@ -111,10 +111,19 @@
               <p class="form-footnote" id="booking-mode-note">No modo local, a reserva fica somente neste navegador.</p>
             </form>
           </section>
-          <aside class="booking-aside">
-            <div class="aside-icon" aria-hidden="true">✓</div>
-            <h3>Horários sem conflito</h3>
-            <p>Os horários ocupados desaparecem da lista. A duração do serviço é considerada ao montar as opções disponíveis.</p>
+          <aside class="booking-aside" aria-label="Resumo da reserva">
+            <div class="booking-aside-head">
+              <div class="aside-icon" aria-hidden="true">✓</div>
+              <span class="aside-eyebrow">RESUMO DA RESERVA</span>
+            </div>
+            <h3 id="booking-summary-service">Escolha um serviço</h3>
+            <p id="booking-summary-help">Selecione o atendimento, a data e um horário para conferir tudo antes de reservar.</p>
+            <div class="booking-summary-list">
+              <div><span>Duração</span><strong id="booking-summary-duration">—</strong></div>
+              <div><span>Valor</span><strong id="booking-summary-price">—</strong></div>
+              <div><span>Data</span><strong id="booking-summary-date">Escolha uma data</strong></div>
+              <div><span>Horário</span><strong id="booking-summary-time">—</strong></div>
+            </div>
             <div class="hours-chip"><span>Expediente</span><strong id="booking-hours">—</strong></div>
           </aside>
         </div>
