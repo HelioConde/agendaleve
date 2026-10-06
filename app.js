@@ -616,6 +616,8 @@ function inBusinessZone(iso, timeZone) {
 
 function switchView(name) {
   if (publicMode && name !== 'reservas') name = 'reservas';
+  document.body.classList.toggle('booking-customer-view', name === 'reservas');
+  if (name === 'reservas') applyBusinessBrand(currentConfig().brandColor);
   document.querySelectorAll('[data-view]').forEach(button => {
     const active = button.dataset.view === name;
     button.classList.toggle('active', active);
