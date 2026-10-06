@@ -70,6 +70,7 @@ function readLocalBookings() {
   return stored.map((booking, index) => ({
     id: booking.id || `legacy-${index}`,
     client: booking.client || '',
+    phone: booking.phone || '',
     service: booking.service || 'Atendimento',
     serviceId: booking.serviceId || '',
     date: booking.date,
@@ -107,6 +108,20 @@ function timeOf(minutes) {
   const hours = String(Math.floor(minutes / 60)).padStart(2, '0');
   const rest = String(minutes % 60).padStart(2, '0');
   return `${hours}:${rest}`;
+}
+
+function normalizePhone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 15) return '';
+  return digits.startsWith('55') ? '+' + digits : '+55' + digits;
+}
+
+function formatPhone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  const local = digits.startsWith('55') ? digits.slice(2) : digits;
+  if (local.length === 11) return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  return value || '';
 }
 
 function localDateString(date) {
@@ -186,7 +201,7 @@ function renderDashboard() {
     ? bookings.map(booking => `
       <article class="booking-row">
         <div class="booking-date"><strong>${formatDate(booking.date)}</strong><span>${escapeHtml(booking.time)}</span></div>
-        <div class="booking-info"><strong>${escapeHtml(booking.client)}</strong><span>${escapeHtml(booking.service)} · ${booking.duration} min</span></div>
+        <div class="booking-info"><strong>${escapeHtml(booking.client)}</strong><span>${escapeHtml(booking.service)} · ${booking.duration} min</span>${booking.phone ? `<a class="booking-contact" href="https://wa.me/${booking.phone.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp ${escapeHtml(formatPhone(booking.phone))}</a>` : ''}</div>
         <button class="text-button" type="button" data-cancel="${escapeHtml(booking.id)}">Cancelar</button>
       </article>`).join('')
     : '<div class="empty"><strong>Sua agenda começa aqui.</strong><span>Configure seus serviços e compartilhe seu link de reservas.</span></div>';
@@ -346,6 +361,7 @@ function cloudBookingsFromRows(rows, timeZone) {
     return {
       id: row.id,
       client: row.client_name,
+      phone: row.client_phone || '',
       service: row.service_name,
       serviceId: row.service_id,
       date: start.date,
@@ -776,6 +792,12 @@ bookingForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!bookingForm.reportValidity()) return;
   const values = Object.fromEntries(new FormData(bookingForm));
+  const phone = normalizePhone(values.phone);
+  if (!phone) {
+    showToast('Informe um WhatsApp ou telefone válido com DDD.');
+    bookingForm.elements.phone.focus();
+    return;
+  }
   const service = serviceById(values.serviceId);
   if (!service) {
     showToast('Escolha um serviço disponível.');
@@ -805,13 +827,15 @@ bookingForm.addEventListener('submit', async event => {
           businessSlug: currentBusiness.slug,
           serviceId: service.id,
           startsAt,
-          clientName: values.client.trim()
+          clientName: values.client.trim(),
+          clientPhone: phone
         }
       });
       if (error) throw error;
       booking = {
         id: data?.bookingId || crypto.randomUUID?.() || String(Date.now()),
         client: values.client.trim(),
+        phone,
         serviceId: service.id,
         service: service.name,
         duration: Number(service.duration),
@@ -828,6 +852,7 @@ bookingForm.addEventListener('submit', async event => {
         business_id: currentBusiness.id,
         service_id: service.id,
         client_name: values.client.trim(),
+        client_phone: phone,
         service_name: service.name,
         price_cents: Math.round(Number(service.price) * 100),
         starts_at: startDate.toISOString(),
@@ -843,6 +868,7 @@ bookingForm.addEventListener('submit', async event => {
       booking = {
         id: crypto.randomUUID?.() || `booking-${Date.now()}`,
         client: values.client.trim(),
+        phone,
         serviceId: service.id,
         service: service.name,
         duration: Number(service.duration),
