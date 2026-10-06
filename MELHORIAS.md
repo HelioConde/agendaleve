@@ -36,7 +36,7 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 - [x] Adicionar status **não compareceu**.
 - [x] Busca de clientes/agendamentos por nome, telefone ou serviço.
 - [x] Exportar agenda em CSV.
-- [ ] Testes E2E do fluxo completo em navegador.
+- [x] Testes E2E em Chromium cobrindo configuração, expediente por dia, criação/edição de serviço, reserva e busca na agenda.
 
 ## P2 — evolução do produto
 
