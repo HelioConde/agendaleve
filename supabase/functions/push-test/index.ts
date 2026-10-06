@@ -60,9 +60,12 @@ Deno.serve(async (request: Request) => {
   if (subscriptionsError) return json(503, { error: "Não foi possível consultar notificações." });
   if (!subscriptions?.length) return json(409, { error: "Ative as notificações neste navegador primeiro." });
 
+  const locale = user.user_metadata?.agendaleve_language === "en" ? "en" : "pt-BR";
   const payload = JSON.stringify({
-    title: "Teste do AgendaLeve",
-    body: "Se você recebeu esta notificação, o push está funcionando.",
+    title: locale === "en" ? "AgendaLeve test" : "Teste do AgendaLeve",
+    body: locale === "en"
+      ? "If you received this notification, push notifications are working."
+      : "Se você recebeu esta notificação, o push está funcionando.",
     url: "https://helioconde.github.io/agendaleve/",
     tag: "agendaleve-push-test",
   });
