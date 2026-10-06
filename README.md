@@ -48,6 +48,7 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 Tabelas:
 - `agendaleve_businesses` (inclui `brand_color` para personalização da página pública)
 - `agendaleve_business_hours`
+- `agendaleve_time_off`
 - `agendaleve_services`
 - `agendaleve_bookings`
 - `agendaleve_booking_rate_limits`
