@@ -31,6 +31,8 @@ const bookingTime = document.querySelector('#booking-time');
 const bookingList = document.querySelector('#booking-list');
 const bookingDateFilter = document.querySelector('#booking-date-filter');
 const bookingStatusFilter = document.querySelector('#booking-status-filter');
+const bookingSearch = document.querySelector('#booking-search');
+const exportBookingsButton = document.querySelector('#export-bookings');
 const serviceList = document.querySelector('#service-list');
 const accountDialog = document.querySelector('#account-dialog');
 const accountOpenButton = document.querySelector('#account-open');
@@ -54,6 +56,7 @@ let activeConfig = readLocalConfig();
 let activeBookings = readLocalBookings();
 let availableSlotMap = new Map();
 let managedBooking = null;
+let editingServiceId = null;
 let cloudLoading = false;
 
 function readJson(key, fallback) {
@@ -226,7 +229,8 @@ function bookingStatusLabel(status) {
     pending: 'Pendente',
     confirmed: 'Confirmada',
     completed: 'Concluída',
-    cancelled: 'Cancelada'
+    cancelled: 'Cancelada',
+    no_show: 'Não compareceu'
   })[status] || 'Reserva';
 }
 
@@ -300,6 +304,7 @@ function renderDashboard() {
 
   const period = bookingDateFilter?.value || 'upcoming';
   const status = bookingStatusFilter?.value || 'active';
+  const search = String(bookingSearch?.value || '').trim().toLocaleLowerCase('pt-BR');
   let bookings = allBookings.filter(booking => {
     const starts = new Date(`${booking.date}T${booking.time}:00`);
     const matchesPeriod = period === 'all'
@@ -309,7 +314,12 @@ function renderDashboard() {
     const matchesStatus = status === 'all'
       || (status === 'active' && (booking.status === 'pending' || booking.status === 'confirmed'))
       || booking.status === status;
-    return matchesPeriod && matchesStatus;
+    const haystack = [booking.client, booking.phone, booking.service]
+      .filter(Boolean)
+      .join(' ')
+      .toLocaleLowerCase('pt-BR');
+    const matchesSearch = !search || haystack.includes(search);
+    return matchesPeriod && matchesStatus && matchesSearch;
   });
 
   bookings.sort((a, b) => {
@@ -330,7 +340,7 @@ function renderDashboard() {
       const actions = booking.status === 'pending'
         ? `<button class="text-button" type="button" data-booking-action="confirm" data-booking-id="${escapeHtml(booking.id)}">Confirmar</button><button class="text-button danger" type="button" data-booking-action="cancel" data-booking-id="${escapeHtml(booking.id)}">Cancelar</button>`
         : booking.status === 'confirmed'
-          ? `<button class="text-button" type="button" data-booking-action="complete" data-booking-id="${escapeHtml(booking.id)}">Concluir</button><button class="text-button danger" type="button" data-booking-action="cancel" data-booking-id="${escapeHtml(booking.id)}">Cancelar</button>`
+          ? `<button class="text-button" type="button" data-booking-action="complete" data-booking-id="${escapeHtml(booking.id)}">Concluir</button><button class="text-button" type="button" data-booking-action="no_show" data-booking-id="${escapeHtml(booking.id)}">Não compareceu</button><button class="text-button danger" type="button" data-booking-action="cancel" data-booking-id="${escapeHtml(booking.id)}">Cancelar</button>`
           : '';
       return `
       <article class="booking-row">
@@ -370,9 +380,32 @@ function renderServices() {
     ? config.services.map(service => `
       <article class="service-row">
         <div><strong>${escapeHtml(service.name)}</strong><span>${service.duration} min · ${formatPrice(service.price)}</span></div>
-        <button class="text-button danger" type="button" data-remove-service="${escapeHtml(service.id)}" aria-label="Remover ${escapeHtml(service.name)}">Remover</button>
+        <div class="service-actions">
+          <button class="text-button" type="button" data-edit-service="${escapeHtml(service.id)}">Editar</button>
+          <button class="text-button danger" type="button" data-remove-service="${escapeHtml(service.id)}" aria-label="Remover ${escapeHtml(service.name)}">Remover</button>
+        </div>
       </article>`).join('')
     : '<div class="empty">Adicione ao menos um serviço para receber reservas.</div>';
+}
+
+function resetServiceEditor() {
+  editingServiceId = null;
+  serviceForm.reset();
+  serviceForm.elements.duration.value = '60';
+  serviceForm.querySelector('[type="submit"]').textContent = 'Adicionar serviço';
+  document.querySelector('#cancel-service-edit').hidden = true;
+}
+
+function beginServiceEdit(id) {
+  const service = currentConfig().services.find(item => item.id === id);
+  if (!service) return;
+  editingServiceId = id;
+  serviceForm.elements.serviceName.value = service.name;
+  serviceForm.elements.duration.value = String(service.duration);
+  serviceForm.elements.price.value = Number(service.price) || '';
+  serviceForm.querySelector('[type="submit"]').textContent = 'Salvar alterações';
+  document.querySelector('#cancel-service-edit').hidden = false;
+  serviceForm.elements.serviceName.focus();
 }
 
 function renderServiceOptions() {
@@ -1047,41 +1080,74 @@ serviceForm.addEventListener('submit', async event => {
       showToast('Salve primeiro as informações do negócio.');
       return;
     }
-    const { data, error } = await supabaseClient.from('agendaleve_services').insert({
-      business_id: currentBusiness.id,
-      name: service.name,
-      duration_minutes: service.duration,
-      price_cents: Math.round(service.price * 100),
-      is_active: true
-    }).select('*').single();
 
-    if (error) {
-      showToast('Não foi possível adicionar o serviço.');
-      return;
+    if (editingServiceId) {
+      const { data, error } = await supabaseClient.from('agendaleve_services')
+        .update({
+          name: service.name,
+          duration_minutes: service.duration,
+          price_cents: Math.round(service.price * 100)
+        })
+        .eq('id', editingServiceId)
+        .select('*')
+        .single();
+      if (error) {
+        showToast('Não foi possível atualizar o serviço.');
+        return;
+      }
+      activeConfig.services = activeConfig.services.map(item => item.id === editingServiceId ? {
+        id: data.id,
+        name: data.name,
+        duration: Number(data.duration_minutes),
+        price: Number(data.price_cents) / 100
+      } : item);
+    } else {
+      const { data, error } = await supabaseClient.from('agendaleve_services').insert({
+        business_id: currentBusiness.id,
+        name: service.name,
+        duration_minutes: service.duration,
+        price_cents: Math.round(service.price * 100),
+        is_active: true
+      }).select('*').single();
+
+      if (error) {
+        showToast('Não foi possível adicionar o serviço.');
+        return;
+      }
+      activeConfig.services.push({
+        id: data.id,
+        name: data.name,
+        duration: Number(data.duration_minutes),
+        price: Number(data.price_cents) / 100
+      });
     }
-    activeConfig.services.push({
-      id: data.id,
-      name: data.name,
-      duration: Number(data.duration_minutes),
-      price: Number(data.price_cents) / 100
-    });
   } else {
     const current = readLocalConfig();
-    current.services.push({
-      id: crypto.randomUUID?.() || `service-${Date.now()}`,
-      ...service
-    });
+    if (editingServiceId) {
+      current.services = current.services.map(item => item.id === editingServiceId ? { ...item, ...service } : item);
+    } else {
+      current.services.push({
+        id: crypto.randomUUID?.() || `service-${Date.now()}`,
+        ...service
+      });
+    }
     activeConfig = current;
     writeLocalConfig(current);
   }
 
-  serviceForm.reset();
-  serviceForm.elements.duration.value = '30';
+  const edited = Boolean(editingServiceId);
+  resetServiceEditor();
   renderAll();
-  showToast('Serviço adicionado.');
+  showToast(edited ? 'Serviço atualizado.' : 'Serviço adicionado.');
 });
 
 serviceList.addEventListener('click', async event => {
+  const editButton = event.target.closest('[data-edit-service]');
+  if (editButton) {
+    beginServiceEdit(editButton.dataset.editService);
+    return;
+  }
+
   const button = event.target.closest('[data-remove-service]');
   if (!button) return;
   if (!window.confirm('Remover este serviço das próximas reservas? Os atendimentos já marcados serão mantidos.')) return;
@@ -1101,9 +1167,12 @@ serviceList.addEventListener('click', async event => {
     writeLocalConfig(config);
   }
 
+  if (editingServiceId === id) resetServiceEditor();
   renderAll();
   showToast('Serviço removido.');
 });
+
+document.querySelector('#cancel-service-edit').addEventListener('click', resetServiceEditor);
 
 bookingService.addEventListener('change', refreshAvailability);
 bookingDate.addEventListener('change', refreshAvailability);
@@ -1315,6 +1384,7 @@ document.querySelector('#newBooking').addEventListener('click', () => {
 
 bookingDateFilter?.addEventListener('change', renderDashboard);
 bookingStatusFilter?.addEventListener('change', renderDashboard);
+bookingSearch?.addEventListener('input', renderDashboard);
 
 bookingList.addEventListener('click', async event => {
   const emptyAction = event.target.closest('[data-empty-go]');
@@ -1329,6 +1399,7 @@ bookingList.addEventListener('click', async event => {
   const id = button.dataset.bookingId;
   const nextStatus = action === 'confirm' ? 'confirmed'
     : action === 'complete' ? 'completed'
+    : action === 'no_show' ? 'no_show'
     : action === 'cancel' ? 'cancelled'
     : '';
   if (!nextStatus || !id) return;
@@ -1336,6 +1407,7 @@ bookingList.addEventListener('click', async event => {
   const prompts = {
     confirmed: 'Confirmar este agendamento?',
     completed: 'Marcar este atendimento como concluído?',
+    no_show: 'Marcar que o cliente não compareceu?',
     cancelled: 'Cancelar este horário?'
   };
   if (!window.confirm(prompts[nextStatus])) return;
@@ -1359,11 +1431,50 @@ bookingList.addEventListener('click', async event => {
   const messages = {
     confirmed: 'Agendamento confirmado.',
     completed: 'Atendimento concluído.',
+    no_show: 'Marcado como não compareceu.',
     cancelled: 'Agendamento cancelado.'
   };
   showToast(messages[nextStatus]);
 });
 
+function csvCell(value) {
+  const text = String(value ?? '');
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function exportBookingsCsv() {
+  const bookings = [...currentBookings()].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  if (!bookings.length) {
+    showToast('Ainda não há agendamentos para exportar.');
+    return;
+  }
+  const rows = [
+    ['Data','Hora','Cliente','Telefone','Serviço','Duração (min)','Valor','Status'],
+    ...bookings.map(booking => [
+      booking.date,
+      booking.time,
+      booking.client,
+      formatPhone(booking.phone),
+      booking.service,
+      booking.duration,
+      Number(booking.price || 0).toFixed(2).replace('.', ','),
+      bookingStatusLabel(booking.status)
+    ])
+  ];
+  const csv = '\ufeff' + rows.map(row => row.map(csvCell).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `agendaleve-${localDateString(new Date())}.csv`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast('Agenda exportada em CSV.');
+}
+
+exportBookingsButton?.addEventListener('click', exportBookingsCsv);
 document.querySelector('#copy-public-link').addEventListener('click', copyPublicBookingLink);
 document.querySelector('#dashboard-copy-link').addEventListener('click', copyPublicBookingLink);
 
