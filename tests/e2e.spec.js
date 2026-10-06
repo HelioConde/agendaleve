@@ -16,6 +16,25 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: /Mais tempo atendendo/i })).toBeVisible();
 });
 
+
+test('mantém PT-BR como padrão e permite alternar para inglês com persistência', async ({ page }) => {
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await expect(page.getByRole('heading', { name: /Mais tempo atendendo/i })).toBeVisible();
+
+  await page.locator('[data-language="en"]').click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: /More time serving clients/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Business settings' })).toBeVisible();
+
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('heading', { name: /More time serving clients/i })).toBeVisible();
+
+  await page.locator('[data-language="pt-BR"]').click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-BR');
+  await expect(page.getByRole('heading', { name: /Mais tempo atendendo/i })).toBeVisible();
+});
+
 test('configura expediente, edita serviço, reserva e encontra cliente na agenda', async ({ page }) => {
   await page.getByRole('button', { name: 'Configurar negócio' }).click();
 
