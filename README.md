@@ -10,6 +10,8 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - link público por `?negocio=slug`;
 - disponibilidade em tempo real;
 - telefone/WhatsApp privado por reserva para retorno do estabelecimento;
+- filtros da agenda por período e status;
+- ações rápidas para confirmar, concluir e cancelar atendimentos;
 - Edge Function `booking-availability` sem exposição de dados privados;
 - Edge Function `create-booking` com validação, rate limit e prevenção de conflitos;
 - RLS separando proprietário, visitante público e reservas privadas;
