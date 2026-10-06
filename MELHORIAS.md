@@ -52,7 +52,7 @@ Este documento é o backlog de produto, UX/UI, QA e crescimento do AgendaLeve.
 - [ ] Agenda individual por profissional.
 - [ ] Bloqueios/folgas/férias.
 - [ ] Serviços com buffers antes/depois.
-- [ ] Branding do negócio na página pública.
+- [x] Branding do negócio na página pública com cor personalizada, preview no painel e persistência local/nuvem.
 - [ ] Foto/logo do negócio.
 - [ ] Pagamento/sinal opcional.
 - [x] Relatório de comparecimento e cancelamentos, com resumo dos últimos 30 dias.
