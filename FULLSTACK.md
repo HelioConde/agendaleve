@@ -36,3 +36,8 @@ Double-booking, timezone handling, overlapping services, cancellation rules, rat
 ## Branding público
 
 `agendaleve_businesses.brand_color` armazena a cor principal do negócio com validação hexadecimal. O frontend mantém fallback seguro, calcula automaticamente uma cor de texto legível e aplica a personalização somente na experiência de reserva/preview do cliente.
+
+
+## Bloqueios e folgas
+
+`agendaleve_time_off` armazena períodos fechados por negócio com RLS por proprietário. O frontend respeita os bloqueios em modo local/nuvem e as Edge Functions de disponibilidade, criação e reagendamento verificam novamente a data no servidor antes de permitir uma reserva pública.
