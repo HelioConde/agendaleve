@@ -201,3 +201,13 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 #view-reservas:not([hidden]),#view-configuracao:not([hidden]){padding-top:8px}
 @media(max-width:760px){.booking-summary-list{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:620px){.booking-summary-list{grid-template-columns:1fr 1fr}}
+
+.manage-booking-panel{max-width:720px;margin-inline:auto}
+.manage-mark{background:#e7f1eb;color:#285b40}
+.reschedule-box{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:12px;background:#fbfcfa;text-align:left}
+.manage-current{display:grid;gap:4px;margin-bottom:12px}
+.manage-current span,.manage-danger-zone>span{color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+.manage-current strong{font-size:13px;line-height:1.5}
+.manage-primary{width:100%;margin-top:4px}
+.manage-danger-zone{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);text-align:left}
+@media(max-width:560px){.manage-danger-zone{align-items:stretch;flex-direction:column}.manage-danger-zone .secondary{width:100%}}
