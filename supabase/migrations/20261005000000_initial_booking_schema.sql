@@ -1,5 +1,6 @@
 -- AgendaLeve initial multi-business booking schema.
--- Public visitors can discover only active business/service details and must use the Edge Function to book.
+-- Initial schema for private owner data and server-side public booking. API table grants remain
+-- revoked until the public discovery and authenticated owner flows are ready to be enabled.
 create extension if not exists btree_gist with schema extensions;
 
 create table public.businesses (
