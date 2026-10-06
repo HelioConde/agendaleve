@@ -131,7 +131,23 @@
               <a class="secondary whatsapp-link" id="whatsappConfirmation" href="#" target="_blank" rel="noopener">Abrir WhatsApp</a>
             </div>
           </div>
+          <div id="cancel-link-box" class="cancel-link-box" hidden>
+            <strong>Precisa cancelar depois?</strong>
+            <p>Guarde este link privado. Ele permite cancelar a reserva sem entrar em uma conta.</p>
+            <div class="confirmation-actions">
+              <button class="secondary" id="copy-cancel-link" type="button">Copiar link</button>
+              <a class="secondary" id="cancel-reservation-link" href="#">Gerenciar reserva</a>
+            </div>
+          </div>
           <button class="text-button" id="newBooking" type="button">Fazer outro agendamento →</button>
+        </section>
+        <section class="booking-confirmation panel" id="cancelBookingPanel" hidden aria-live="polite">
+          <span class="confirmation-check cancellation-mark" aria-hidden="true">×</span>
+          <p class="eyebrow">GERENCIAR RESERVA</p>
+          <h2 id="cancelBookingTitle" tabindex="-1">Cancelar esta reserva?</h2>
+          <p id="cancelBookingText" class="confirmation-summary">Ao confirmar, o horário volta a ficar disponível para outras pessoas.</p>
+          <button class="secondary cancellation-button" id="confirmCustomerCancellation" type="button">Cancelar minha reserva</button>
+          <a class="text-button cancel-back-link" id="backToBooking" href="#">Voltar sem cancelar</a>
         </section>
       </section>
 
