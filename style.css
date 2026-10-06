@@ -163,3 +163,18 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .field-help{display:block;margin-top:6px;color:var(--muted);font-size:10px;line-height:1.45}
 .booking-contact{display:inline-flex;margin-top:5px;color:var(--accent);font-size:10px;font-weight:700;text-decoration:none}
 .booking-contact:hover{text-decoration:underline}
+
+.agenda-panel-heading{align-items:flex-end;gap:18px}
+.agenda-filters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.agenda-filters label{display:block;min-width:132px}
+.agenda-filters label>span{display:block;margin-bottom:5px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase}
+.agenda-filters select{width:100%;min-height:36px;padding:7px 28px 7px 9px;border:1px solid var(--line);border-radius:8px;background:#fbfcfa;color:var(--ink);font-size:11px}
+.booking-title-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.booking-actions{display:flex;align-items:center;justify-content:flex-end;gap:3px;flex-wrap:wrap}
+.status-chip{display:inline-flex!important;align-items:center;margin:0!important;padding:3px 7px;border-radius:99px;font-size:9px!important;font-weight:800;line-height:1.2}
+.status-pending{background:#fff3d6;color:#805d13}
+.status-confirmed{background:#e7f1eb;color:#285b40}
+.status-completed{background:#e9eef3;color:#4a5b6a}
+.status-cancelled{background:#f8e9e6;color:#8c4338}
+@media(max-width:760px){.agenda-panel-heading{align-items:stretch;flex-direction:column}.agenda-filters{justify-content:stretch}.agenda-filters label{flex:1;min-width:120px}}
+@media(max-width:520px){.booking-row{grid-template-columns:86px 1fr}.booking-actions{grid-column:2;justify-content:flex-start}.agenda-filters{display:grid;grid-template-columns:1fr 1fr;width:100%}}
