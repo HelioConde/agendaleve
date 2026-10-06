@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
+  --business-accent: #1f6a4a;
+  --business-accent-text: #ffffff;
   --ink: #17241d;
   --muted: #617067;
   --line: #dce3dd;
@@ -624,3 +626,15 @@ html[lang="en"] .tabs .tab{white-space:normal}
 .confirmation-calendar .secondary{flex:0 0 auto}
 .confirmation-calendar span{color:var(--muted);font-size:10px;line-height:1.4}
 @media(max-width:520px){.confirmation-calendar{align-items:stretch;flex-direction:column}.confirmation-calendar .secondary{width:100%}}
+
+.brand-color-field input[type="color"]{min-height:46px;padding:5px;cursor:pointer;background:#fff}
+.brand-color-field input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
+.brand-color-field input[type="color"]::-webkit-color-swatch{border:0;border-radius:7px}
+.public-booking-mode #view-reservas .primary{background:var(--business-accent);color:var(--business-accent-text)}
+.public-booking-mode #view-reservas .primary:hover{background:color-mix(in srgb,var(--business-accent) 88%,#000)}
+.public-booking-mode #view-reservas .aside-icon{background:var(--business-accent);color:var(--business-accent-text)}
+.public-booking-mode #view-reservas .aside-eyebrow,
+.public-booking-mode #view-reservas .booking-panel h3{color:var(--business-accent)}
+.public-booking-mode #view-reservas .booking-aside{border-color:color-mix(in srgb,var(--business-accent) 24%,#dce8de);background:color-mix(in srgb,var(--business-accent) 8%,#fff)}
+.public-booking-mode .public-mode-banner{border-left:4px solid var(--business-accent)}
+.public-booking-mode .booking-confirmation .confirmation-check{background:color-mix(in srgb,var(--business-accent) 12%,#fff);color:var(--business-accent)}
