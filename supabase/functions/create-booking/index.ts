@@ -113,6 +113,17 @@ function getSecretKey() {
   }
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 }
+function dateInTimeZone(iso: string, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(iso));
+  const map = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
 
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("origin");
@@ -189,6 +200,27 @@ Deno.serve(async (request: Request) => {
       return json(403, { error: "Confirme que você não é um robô e tente novamente." }, origin);
     }
   }
+
+  const { data: business, error: businessError } = await client
+    .from("agendaleve_businesses")
+    .select("id,timezone,is_public")
+    .eq("slug", businessSlug)
+    .eq("is_public", true)
+    .maybeSingle();
+  if (businessError) return json(503, { error: "Não foi possível consultar o negócio." }, origin);
+  if (!business) return json(404, { error: "Negócio indisponível." }, origin);
+
+  const bookingDate = dateInTimeZone(startsAt, business.timezone || "America/Sao_Paulo");
+  const { data: timeOff, error: timeOffError } = await client
+    .from("agendaleve_time_off")
+    .select("id")
+    .eq("business_id", business.id)
+    .lte("starts_on", bookingDate)
+    .gte("ends_on", bookingDate)
+    .limit(1)
+    .maybeSingle();
+  if (timeOffError) return json(503, { error: "Não foi possível validar a agenda." }, origin);
+  if (timeOff) return json(409, { error: "Esta data está bloqueada pelo estabelecimento." }, origin);
 
   const cancelToken = generateCancelToken();
   const { data, error } = await client.rpc("agendaleve_create_public_booking", {
