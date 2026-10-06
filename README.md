@@ -9,6 +9,7 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 - negócio, expediente, serviços e reservas persistidos no `pizzaria-db`;
 - link público por `?negocio=slug`;
 - disponibilidade em tempo real;
+- telefone/WhatsApp privado por reserva para retorno do estabelecimento;
 - Edge Function `booking-availability` sem exposição de dados privados;
 - Edge Function `create-booking` com validação, rate limit e prevenção de conflitos;
 - RLS separando proprietário, visitante público e reservas privadas;
