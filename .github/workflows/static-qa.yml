@@ -28,6 +28,7 @@ jobs:
           test -f supabase/functions/booking-availability/index.ts
           test -f supabase/migrations/20261006024500_data_api_grants_and_indexes.sql
           test -f supabase/migrations/20261006025000_public_authenticated_rls.sql
+          test -f supabase/migrations/20261006043000_booking_contact.sql
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -35,3 +36,5 @@ jobs:
           grep -qi 'meta name="description"' index.html
           grep -qi 'rel="canonical"' index.html
           grep -qi 'supabase-config.js' index.html
+          grep -qi 'name="phone"' index.html
+          grep -qi 'clientPhone' supabase/functions/create-booking/index.ts
