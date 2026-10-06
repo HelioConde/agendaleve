@@ -112,11 +112,13 @@ Deno.serve(async (request: Request) => {
   const serviceId = typeof input.serviceId === "string" ? input.serviceId : "";
   const startsAt = typeof input.startsAt === "string" ? input.startsAt : "";
   const clientName = typeof input.clientName === "string" ? input.clientName.trim() : "";
+  const clientPhone = typeof input.clientPhone === "string" ? input.clientPhone.trim() : "";
 
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(businessSlug)
       || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(serviceId)
       || !Number.isFinite(Date.parse(startsAt))
-      || clientName.length < 1 || clientName.length > 80) {
+      || clientName.length < 1 || clientName.length > 80
+      || !/^\+?[0-9]{10,15}$/.test(clientPhone)) {
     return json(400, { error: "Confira os dados da reserva." }, origin);
   }
 
@@ -148,6 +150,7 @@ Deno.serve(async (request: Request) => {
     p_service_id: serviceId,
     p_starts_at: new Date(startsAt).toISOString(),
     p_client_name: clientName,
+    p_client_phone: clientPhone,
   });
   if (error) {
     const status = error.code === "23P01" ? 409
