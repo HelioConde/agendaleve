@@ -24,10 +24,22 @@ function json(status: number, body: Record<string, unknown>, origin: string | nu
   });
 }
 
-async function hashIp(ip: string) {
-  const bytes = new TextEncoder().encode(ip);
+async function hashText(value: string) {
+  const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashIp(ip: string) {
+  return hashText(ip);
+}
+
+function generateCancelToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
@@ -145,12 +157,14 @@ Deno.serve(async (request: Request) => {
     return json(status, { error: status === 429 ? "Muitas tentativas. Tente novamente em alguns minutos." : "Serviço temporariamente indisponível." }, origin);
   }
 
+  const cancelToken = generateCancelToken();
   const { data, error } = await client.rpc("agendaleve_create_public_booking", {
     p_business_slug: businessSlug,
     p_service_id: serviceId,
     p_starts_at: new Date(startsAt).toISOString(),
     p_client_name: clientName,
     p_client_phone: clientPhone,
+    p_cancel_token_hash: await hashText(cancelToken),
   });
   if (error) {
     const status = error.code === "23P01" ? 409
@@ -170,5 +184,6 @@ Deno.serve(async (request: Request) => {
     bookingId: booking?.booking_id,
     service: booking?.booked_service,
     startsAt: booking?.booked_starts_at,
+    cancelToken,
   }, origin);
 });
