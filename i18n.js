@@ -382,6 +382,24 @@
   "Cor da página pública": "Public page color",
   "Usada nos destaques e botões da página de reservas.": "Used for highlights and buttons on the booking page."
 });
+  Object.assign(translations, {
+  "Bloqueios, folgas e férias": "Blocks, days off and vacations",
+  "Feche períodos inteiros sem alterar seu expediente semanal.": "Close full periods without changing your weekly hours.",
+  "Início": "Start",
+  "Fim": "End",
+  "Motivo (opcional)": "Reason (optional)",
+  "Ex.: Férias": "E.g. Vacation",
+  "Adicionar bloqueio": "Add block",
+  "Nenhum bloqueio cadastrado.": "No blocked periods yet.",
+  "Período bloqueado": "Blocked period",
+  "Confira o período do bloqueio.": "Check the blocked period.",
+  "Período bloqueado.": "Period blocked.",
+  "Não foi possível salvar o bloqueio.": "Could not save the blocked period.",
+  "Bloqueio removido.": "Block removed.",
+  "Não foi possível remover o bloqueio.": "Could not remove the blocked period.",
+  "Data bloqueada": "Blocked date",
+  "Esta data está bloqueada pelo estabelecimento.": "This date is blocked by the business."
+});
   const reverse = Object.fromEntries(Object.entries(translations).map(([pt,en]) => [en,pt]));
   let activeLocale = localStorage.getItem(storageKey) === 'en' ? 'en' : 'pt-BR';
   let applying = false;
