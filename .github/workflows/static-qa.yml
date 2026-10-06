@@ -30,6 +30,10 @@ jobs:
           test -f tests/e2e.spec.js
           test -f sw.js
           test -f VALIDACAO_BETA.md
+          test -f manifest.webmanifest
+          test -f icon.svg
+          test -f supabase/functions/beta-summary/index.ts
+          test -f supabase/functions/push-test/index.ts
           test -f supabase/functions/reminder-dispatch/index.ts
           test -f supabase/functions/beta-signal/index.ts
           test -f supabase/migrations/20261006083000_push_reminders_beta.sql
@@ -91,3 +95,8 @@ jobs:
           grep -qi 'turnstile_secret' supabase/functions/create-booking/index.ts
           grep -qi 'web-push' supabase/functions/reminder-dispatch/index.ts
           grep -qi 'notificationclick' sw.js
+          grep -qi 'manifest.webmanifest' index.html
+          grep -qi 'beforeinstallprompt' app.js
+          grep -qi 'beta-summary' app.js
+          grep -qi 'push-test' app.js
+          grep -qi 'agendaleve-shell-v1' sw.js
