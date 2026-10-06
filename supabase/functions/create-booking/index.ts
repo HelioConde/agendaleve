@@ -5,6 +5,7 @@ const allowedOrigins = new Set([
   "http://localhost:8000",
   "http://127.0.0.1:8000",
 ]);
+const maxBodyBytes = 4096;
 
 function corsHeaders(origin: string | null) {
   const headers: Record<string, string> = {
@@ -29,27 +30,81 @@ async function hashIp(ip: string) {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
+async function readJsonBody(request: Request): Promise<Record<string, unknown> | null> {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null) {
+    if (!/^\d+$/.test(contentLength)) return null;
+    if (Number(contentLength) > maxBodyBytes) throw new RangeError("body_too_large");
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBodyBytes) {
+        await reader.cancel();
+        throw new RangeError("body_too_large");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  const parsed: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  return parsed as Record<string, unknown>;
+}
+
+function getSecretKey() {
+  const secretKeys = Deno.env.get("SUPABASE_SECRET_KEYS");
+  if (secretKeys) {
+    try {
+      const parsed: unknown = JSON.parse(secretKeys);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const defaultKey = (parsed as Record<string, unknown>).default;
+        if (typeof defaultKey === "string" && defaultKey.length > 0) return defaultKey;
+      }
+    } catch {
+      // Fall back to the legacy key while projects migrate to the new key format.
+    }
+  }
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+}
+
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("origin");
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(origin) });
   if (request.method !== "POST") return json(405, { error: "Método não permitido." }, origin);
   if (origin && !allowedOrigins.has(origin)) return json(403, { error: "Origem não permitida." }, origin);
 
-  let rawBody: string;
-  try {
-    rawBody = await request.text();
-    if (new TextEncoder().encode(rawBody).length > 4096) {
-      return json(413, { error: "Pedido muito grande." }, origin);
-    }
-  } catch {
-    return json(400, { error: "Pedido inválido." }, origin);
+  const contentType = request.headers.get("content-type") || "";
+  if (!/^application\/json(?:\s*;|$)/i.test(contentType)) {
+    return json(415, { error: "Envie os dados em formato JSON." }, origin);
   }
 
   let input: Record<string, unknown>;
   try {
-    input = JSON.parse(rawBody);
-    if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid body");
-  } catch {
+    const parsed = await readJsonBody(request);
+    if (!parsed) return json(400, { error: "Pedido inválido." }, origin);
+    input = parsed;
+  } catch (error) {
+    if (error instanceof RangeError && error.message === "body_too_large") {
+      return json(413, { error: "Pedido muito grande." }, origin);
+    }
     return json(400, { error: "Pedido inválido." }, origin);
   }
 
@@ -71,7 +126,7 @@ Deno.serve(async (request: Request) => {
   if (!forwarded) return json(503, { error: "Não foi possível processar a reserva agora." }, origin);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceKey = getSecretKey();
   if (!supabaseUrl || !serviceKey) return json(503, { error: "Serviço temporariamente indisponível." }, origin);
 
   const client = createClient(supabaseUrl, serviceKey, {
