@@ -8,6 +8,8 @@ alter table public.agendaleve_bookings
   add constraint agendaleve_bookings_client_phone_check
   check (client_phone is null or client_phone ~ '^\\+?[0-9]{10,15}$');
 
+drop function if exists public.agendaleve_create_public_booking(text, uuid, timestamptz, text);
+
 create or replace function public.agendaleve_create_public_booking(
   p_business_slug text,
   p_service_id uuid,
