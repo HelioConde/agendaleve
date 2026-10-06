@@ -10,6 +10,17 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://helioconde.github.io/agendaleve/">
   <link rel="canonical" href="https://helioconde.github.io/agendaleve/">
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"SoftwareApplication",
+    "name":"AgendaLeve",
+    "applicationCategory":"BusinessApplication",
+    "operatingSystem":"Web",
+    "url":"https://helioconde.github.io/agendaleve/",
+    "description":"Agenda online para pequenos negócios configurarem serviços, horários e reservas."
+  }
+  </script>
   <title>AgendaLeve — Agendamentos simples para seu negócio</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -75,13 +86,29 @@
       <section class="view" id="view-agenda">
         <div class="view-heading">
           <div><p class="eyebrow">PAINEL DO NEGÓCIO</p><h2>Visão geral</h2></div>
-          <button class="primary compact" type="button" data-go="reservas">+ Agendar cliente</button>
+          <div class="view-actions">
+            <button class="secondary compact" id="dashboard-copy-link" type="button" hidden>Copiar link público</button>
+            <button class="primary compact" type="button" data-go="reservas">+ Agendar cliente</button>
+          </div>
         </div>
         <div class="stats" aria-label="Resumo da agenda">
           <article class="stat-card"><span>Próximos atendimentos</span><strong id="stat-upcoming">0</strong><small>horários futuros</small></article>
           <article class="stat-card"><span>Serviços ativos</span><strong id="stat-services">0</strong><small>disponíveis para reserva</small></article>
           <article class="stat-card"><span>Expediente</span><strong id="stat-hours">—</strong><small>horário de atendimento</small></article>
         </div>
+        <section class="setup-card" id="setup-card" hidden aria-labelledby="setup-title">
+          <div class="setup-copy">
+            <p class="eyebrow">PRIMEIROS PASSOS</p>
+            <h3 id="setup-title">Deixe sua agenda pronta para receber clientes</h3>
+            <p id="setup-progress-text">Complete a configuração para liberar seu link público.</p>
+          </div>
+          <ol class="setup-steps">
+            <li id="setup-business"><span class="setup-check" aria-hidden="true">1</span><div><strong>Identifique seu negócio</strong><small>Nome e expediente definidos.</small></div></li>
+            <li id="setup-service"><span class="setup-check" aria-hidden="true">2</span><div><strong>Cadastre um serviço</strong><small>Duração e preço claros para o cliente.</small></div></li>
+            <li id="setup-public"><span class="setup-check" aria-hidden="true">3</span><div><strong>Publique o link</strong><small>Entre na conta e ative reservas públicas.</small></div></li>
+          </ol>
+          <button class="secondary compact" type="button" data-go="configuracao">Continuar configuração</button>
+        </section>
         <section class="panel">
           <div class="panel-heading agenda-panel-heading">
             <div><h3>Agenda</h3><p id="booking-filter-count">Reservas confirmadas e pendentes.</p></div>
