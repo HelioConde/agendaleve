@@ -81,3 +81,8 @@ O proprietário pode ativar Web Push explicitamente no navegador e escolher lemb
 ## Validação beta
 
 Consulte [VALIDACAO_BETA.md](./VALIDACAO_BETA.md). O produto já coleta eventos de funil e feedback sem PII, mas validação real só será considerada concluída depois da rodada com pessoas reais.
+
+
+## PWA e operação beta
+
+O AgendaLeve é instalável como PWA quando o navegador oferece o prompt. O service worker mantém o shell básico disponível e também recebe notificações push. Proprietários autenticados podem enviar uma notificação de teste e acompanhar, no painel beta, reservas iniciadas, concluídas, conversão e nota média dos últimos 30 dias.
