@@ -76,7 +76,7 @@ alter table public.bookings enable row level security;
 alter table public.booking_rate_limits enable row level security;
 
 -- Only the columns required for the public booking page are readable without login.
-grant select (id, slug, name, timezone, slot_interval_minutes) on public.businesses to anon;
+grant select (id, slug, name, timezone, slot_interval_minutes, is_public) on public.businesses to anon;
 grant select (business_id, weekday, opens_at, closes_at) on public.business_hours to anon;
 grant select (id, business_id, name, duration_minutes, price_cents) on public.services to anon;
 grant select, insert, update, delete on public.businesses, public.business_hours, public.services, public.bookings to authenticated;
