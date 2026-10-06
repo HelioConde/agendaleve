@@ -27,10 +27,13 @@ jobs:
           test -f supabase/functions/create-booking/index.ts
           test -f supabase/functions/booking-availability/index.ts
           test -f supabase/functions/cancel-booking/index.ts
+          test -f supabase/functions/booking-manage/index.ts
+          test -f supabase/functions/reschedule-booking/index.ts
           test -f supabase/migrations/20261006024500_data_api_grants_and_indexes.sql
           test -f supabase/migrations/20261006025000_public_authenticated_rls.sql
           test -f supabase/migrations/20261006043000_booking_contact.sql
           test -f supabase/migrations/20261006050000_customer_cancellation.sql
+          test -f supabase/migrations/20261006070000_customer_reschedule.sql
       - name: Check SEO and backend boot
         run: |
           grep -qi '<title' index.html
@@ -46,6 +49,10 @@ jobs:
           grep -qi 'cancelToken' supabase/functions/create-booking/index.ts
           grep -qi 'cancel_token_hash' supabase/functions/cancel-booking/index.ts
           grep -qi 'cancelBookingPanel' index.html
+          grep -qi 'reschedule-date' index.html
+          grep -qi 'booking-manage' app.js
+          grep -qi 'reschedule-booking' app.js
+          grep -qi 'excludedBookingId' supabase/functions/booking-availability/index.ts
           grep -qi 'booking-summary-service' index.html
           grep -qi 'updateBookingSummary' app.js
           grep -qi 'ownerDashboard' app.js
