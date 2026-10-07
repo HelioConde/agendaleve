@@ -94,7 +94,7 @@ async function capture(name, viewport) {
       .slice(0, 30);
 
     const brokenImages = [...document.images]
-      .filter(image => image.complete && image.naturalWidth === 0)
+      .filter(image => visible(image) && image.complete && image.naturalWidth === 0)
       .map(image => image.currentSrc || image.src)
       .slice(0, 30);
 
