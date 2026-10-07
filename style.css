@@ -649,3 +649,59 @@ html[lang="en"] .tabs .tab{white-space:normal}
 .time-off-item span{margin-top:3px;color:var(--muted);font-size:10px}
 .time-off-empty{padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:11px;text-align:center}
 @media(max-width:520px){.time-off-item{align-items:flex-start;flex-direction:column}.time-off-item .text-button{padding-left:0}}
+
+
+/* Cross-project polish — 07/10/2026 */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:40;
+  background:rgba(245,246,242,.94);
+  backdrop-filter:blur(12px);
+}
+.intro{padding-top:48px}
+.intro-copy{font-size:16px;line-height:1.7}
+.intro-card{box-shadow:var(--shadow-sm)}
+.stat-card,.report-card,.panel,.setup-card{box-shadow:var(--shadow-sm)}
+.stats strong,.report-card strong{letter-spacing:-.03em}
+.tabs{
+  position:sticky;
+  top:70px;
+  z-index:25;
+  background:rgba(245,246,242,.94);
+  backdrop-filter:blur(10px);
+}
+.booking-aside{
+  position:sticky;
+  top:138px;
+}
+.booking-panel .field input,
+.booking-panel .field select{min-height:44px}
+.booking-confirmation{box-shadow:var(--shadow)}
+.account-dialog{max-height:calc(100dvh - 28px);overflow:auto}
+.public-mode-banner{box-shadow:var(--shadow-sm)}
+@media(max-width:760px){
+  .topbar{position:relative}
+  .tabs{
+    top:0;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;min-width:max-content}
+  .booking-aside{position:static}
+}
+@media(max-width:560px){
+  .app-shell{width:min(100% - 22px,1180px)}
+  .intro{padding-top:32px}
+  .intro h1{font-size:clamp(38px,12vw,52px);letter-spacing:-2px}
+  .intro-card{min-height:0;padding:18px}
+  .stats,.report-metrics{grid-template-columns:1fr 1fr}
+  .view-heading{align-items:flex-start;flex-direction:column}
+  .view-actions{width:100%}
+  .view-actions .primary,.view-actions .secondary{flex:1}
+  .booking-layout{grid-template-columns:1fr}
+  .confirmation-actions{display:grid;grid-template-columns:1fr}
+  .confirmation-actions .secondary{width:100%}
+}
