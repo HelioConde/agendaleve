@@ -1,0 +1,7 @@
+{
+  "generatedAt": "2026-10-07T06:52:13.881Z",
+  "passed": false,
+  "failures": [
+    "mobile-full.png: 6 small tap target(s)"
+  ]
+}
