@@ -705,3 +705,39 @@ html[lang="en"] .tabs .tab{white-space:normal}
   .confirmation-actions{display:grid;grid-template-columns:1fr}
   .confirmation-actions .secondary{width:100%}
 }
+
+
+/* Visual audit controls — 07/10/2026 */
+.brand{
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+}
+.language-switcher button{
+  min-width:36px;
+  height:36px;
+  min-height:36px;
+}
+.tab{
+  min-height:40px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.report-card small,
+.setup-steps small,
+.agenda-filters label span{
+  font-size:10px;
+  line-height:1.45;
+}
+@media(max-width:720px){
+  .language-switcher button{
+    min-width:36px;
+    height:36px;
+    padding:0 7px;
+  }
+}
+@media(max-width:560px){
+  .brand{min-height:40px}
+  .tab{min-height:40px}
+}
