@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-07T06:56:30.362Z",
+  "generatedAt": "2026-10-07T06:57:08.981Z",
   "baseUrl": "http://127.0.0.1:4173/",
   "captures": [
     {
@@ -10,78 +10,12 @@
       },
       "title": "AgendaLeve — Agendamentos simples para seu negócio",
       "width": 1440,
-      "height": 1539,
+      "height": 1547,
       "viewportWidth": 1440,
       "viewportHeight": 1000,
       "overflow": [],
-      "smallTapTargets": [
-        {
-          "tag": "a",
-          "id": "",
-          "className": "brand",
-          "width": 118,
-          "height": 27,
-          "text": "AgendaLeve."
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "active",
-          "width": 34,
-          "height": 28,
-          "text": "PT"
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "",
-          "width": 34,
-          "height": 28,
-          "text": "EN"
-        }
-      ],
-      "tinyText": [
-        {
-          "text": "concluídos ÷ concluídos + faltas",
-          "fontSize": 9
-        },
-        {
-          "text": "atendimentos marcados como falta",
-          "fontSize": 9
-        },
-        {
-          "text": "reservas canceladas no período",
-          "fontSize": 9
-        },
-        {
-          "text": "somente atendimentos concluídos",
-          "fontSize": 9
-        },
-        {
-          "text": "Nome e expediente definidos.",
-          "fontSize": 9
-        },
-        {
-          "text": "Duração e preço claros para o cliente.",
-          "fontSize": 9
-        },
-        {
-          "text": "Entre na conta e ative reservas públicas.",
-          "fontSize": 9
-        },
-        {
-          "text": "Buscar",
-          "fontSize": 9
-        },
-        {
-          "text": "Período",
-          "fontSize": 9
-        },
-        {
-          "text": "Status",
-          "fontSize": 9
-        }
-      ],
+      "smallTapTargets": [],
+      "tinyText": [],
       "brokenImages": [],
       "consoleErrors": [],
       "failedRequests": []
@@ -94,102 +28,12 @@
       },
       "title": "AgendaLeve — Agendamentos simples para seu negócio",
       "width": 390,
-      "height": 2555,
+      "height": 2599,
       "viewportWidth": 390,
       "viewportHeight": 844,
       "overflow": [],
-      "smallTapTargets": [
-        {
-          "tag": "a",
-          "id": "",
-          "className": "brand",
-          "width": 118,
-          "height": 27,
-          "text": "AgendaLeve."
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "active",
-          "width": 31,
-          "height": 28,
-          "text": "PT"
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "",
-          "width": 31,
-          "height": 28,
-          "text": "EN"
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "tab active",
-          "width": 100,
-          "height": 34,
-          "text": "Minha agenda"
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "tab",
-          "width": 105,
-          "height": 34,
-          "text": "Página do cliente"
-        },
-        {
-          "tag": "button",
-          "id": "",
-          "className": "tab",
-          "width": 117,
-          "height": 34,
-          "text": "Configurar negócio"
-        }
-      ],
-      "tinyText": [
-        {
-          "text": "concluídos ÷ concluídos + faltas",
-          "fontSize": 9
-        },
-        {
-          "text": "atendimentos marcados como falta",
-          "fontSize": 9
-        },
-        {
-          "text": "reservas canceladas no período",
-          "fontSize": 9
-        },
-        {
-          "text": "somente atendimentos concluídos",
-          "fontSize": 9
-        },
-        {
-          "text": "Nome e expediente definidos.",
-          "fontSize": 9
-        },
-        {
-          "text": "Duração e preço claros para o cliente.",
-          "fontSize": 9
-        },
-        {
-          "text": "Entre na conta e ative reservas públicas.",
-          "fontSize": 9
-        },
-        {
-          "text": "Buscar",
-          "fontSize": 9
-        },
-        {
-          "text": "Período",
-          "fontSize": 9
-        },
-        {
-          "text": "Status",
-          "fontSize": 9
-        }
-      ],
+      "smallTapTargets": [],
+      "tinyText": [],
       "brokenImages": [],
       "consoleErrors": [],
       "failedRequests": []
