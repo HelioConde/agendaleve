@@ -1,0 +1,73 @@
+name: Capture Visual Snapshot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "style.css"
+      - "styles.css"
+      - "app.js"
+      - "i18n.js"
+      - "scripts/**"
+      - ".github/workflows/visual-snapshot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: visual-snapshot
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Start local site
+        run: |
+          python3 -m http.server 4173 >/tmp/site.log 2>&1 &
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/site.log
+          exit 1
+      - name: Capture screenshots
+        env:
+          SCREENSHOT_BASE_URL: http://127.0.0.1:4173/
+        run: node scripts/capture-site.mjs
+      - name: Commit screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add screenshots
+          if git diff --cached --quiet; then
+            echo "No screenshot changes."
+          else
+            git commit -m "chore: update visual snapshots [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi
+      - name: Enforce visual quality gate
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const quality = JSON.parse(fs.readFileSync('screenshots/visual-quality.json','utf8'));
+          if (!quality.passed) {
+            console.error('Visual quality gate failed:');
+            quality.failures.forEach(item => console.error('- ' + item));
+            process.exit(1);
+          }
+          console.log('Visual quality gate passed.');
+          NODE
