@@ -19,6 +19,9 @@ jobs:
           node --check app.js
           node --check i18n.js
           node --check supabase-config.js
+          node --check sw.js
+          node --check live-update.js
+          node --check tests/pwa-security.spec.js
       - name: Check required files
         run: |
           test -f index.html
@@ -30,6 +33,7 @@ jobs:
           test -f package.json
           test -f playwright.config.js
           test -f tests/e2e.spec.js
+          test -f tests/pwa-security.spec.js
           test -f sw.js
           test -f VALIDACAO_BETA.md
           test -f manifest.webmanifest
@@ -115,7 +119,10 @@ jobs:
           grep -qi 'beforeinstallprompt' app.js
           grep -qi 'beta-summary' app.js
           grep -qi 'push-test' app.js
-          grep -qi 'agendaleve-shell-v2' sw.js
+          grep -qi 'agendaleve-shell-v3' sw.js
+          grep -qi 'zerotwo-shell' tests/pwa-security.spec.js
+          grep -qi 'agendaleve-' live-update.js
+
           grep -qi 'i18n.js' sw.js
           grep -qi 'agendaleve_language' app.js
           grep -qi 'agendaleve_language' supabase/functions/reminder-dispatch/index.ts
