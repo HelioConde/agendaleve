@@ -4,7 +4,7 @@ Agenda online para pequenos negócios, com painel do proprietário e página pú
 
 ## Status de desenvolvimento
 
-**MVP técnico concluído e publicado.** O AgendaLeve sai da fase de desenvolvimento principal e entra em **validação pós-MVP**.
+**AgendaLeve 1.0: desenvolvimento principal concluído e site publicado.** O produto está liberado para **beta controlado**, com homologação humana e integrações externas ainda pendentes. Consulte o [relatório de encerramento técnico 1.0](RELEASE_V1.md), que inclui evidências de CI, verificação RLS, segurança do PWA e checklist de validação real.
 
 - CI crítico: Static QA, Browser E2E e GitHub Pages aprovados.
 - Backend principal e Edge Functions publicados no Supabase.
