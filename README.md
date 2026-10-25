@@ -1,16 +1,38 @@
-# AgendaLeve — Agendamento para pequenos negócios
+<div align="center">
+  <h1>📅 AgendaLeve</h1>
+  <p><strong>Reservas e agenda online para pequenos negócios — sem complicar o dia a dia.</strong></p>
+  <p><img alt="Status" src="https://img.shields.io/badge/status-beta%20controlado-64748b"> <img alt="Web" src="https://img.shields.io/badge/plataforma-web-2563eb"></p>
+  <p><a href="RELEASE_V1.md"><strong>Relatório do beta</strong></a> · <a href="VALIDACAO_BETA.md"><strong>Validação</strong></a> · <a href="FULLSTACK.md"><strong>Arquitetura</strong></a></p>
+</div>
 
-**Organize serviços, horários disponíveis e reservas em uma agenda online com painel do negócio e página pública de agendamento.**
+## Para quem é
 
-[**Relatório técnico do beta**](RELEASE_V1.md)
+Um produto de agenda voltado a **profissionais e pequenos estabelecimentos** que precisam organizar serviços, horários, reservas, folgas e atendimento. O proprietário tem seu painel; o cliente acessa o fluxo público para reservar.
 
-**Visão rápida:** configuração de expediente, serviços, reservas, bloqueios de agenda e experiência separada entre cliente e proprietário. Inclui um modo local e integração Supabase documentada.
+| Área | Exemplos |
+| --- | --- |
+| **Negócio** | Expediente, serviços, bloqueios, reservas e relatórios |
+| **Cliente** | Escolha de serviço e horário, confirmação e reagendamento |
+| **Operação** | Filtros, exportação CSV/ICS, status e lembretes |
+| **Acesso** | Modo local para experimentar; Supabase Auth para dados persistidos |
 
-> **Status:** beta controlado em validação; não confunda o deploy técnico com homologação operacional e verificação final de integrações externas.
+**Estado:** versão 1.0 documentada como **tecnicamente concluída**, destinada a **beta controlado**. Publicação e testes automatizados não substituem homologação de usuários, permissões e integrações externas.
+
+## Abrir e desenvolver
+
+Este repositório usa frontend web estático e integração Supabase quando configurada. Para ver a interface localmente:
+
+```bash
+git clone https://github.com/HelioConde/agendaleve.git
+cd agendaleve
+python -m http.server 8000
+```
+
+Abra `http://localhost:8000`. Para validar testes de navegador, use `npm install` e `npm run test:e2e` após instalar os navegadores Playwright.
+
+**Dados:** o ambiente Supabase, suas políticas RLS e funções precisam ser configurados conforme [SUPABASE_SETUP.md](SUPABASE_SETUP.md). Evite dados de clientes reais em uma demo não homologada.
 
 ---
-
-Agenda online para pequenos negócios, com painel do proprietário e página pública de reservas.
 
 ## Status de desenvolvimento
 
