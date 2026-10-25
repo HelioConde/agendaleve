@@ -1,4 +1,14 @@
-# AgendaLeve
+# AgendaLeve — Agendamento para pequenos negócios
+
+**Organize serviços, horários disponíveis e reservas em uma agenda online com painel do negócio e página pública de agendamento.**
+
+[**Relatório técnico do beta**](RELEASE_V1.md)
+
+**Visão rápida:** configuração de expediente, serviços, reservas, bloqueios de agenda e experiência separada entre cliente e proprietário. Inclui um modo local e integração Supabase documentada.
+
+> **Status:** beta controlado em validação; não confunda o deploy técnico com homologação operacional e verificação final de integrações externas.
+
+---
 
 Agenda online para pequenos negócios, com painel do proprietário e página pública de reservas.
 
