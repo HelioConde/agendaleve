@@ -1,26 +1,45 @@
 <div align="center">
   <h1>📅 AgendaLeve</h1>
-  <p><strong>Reservas e agenda online para pequenos negócios — sem complicar o dia a dia.</strong></p>
-  <p><img alt="Status" src="https://img.shields.io/badge/status-beta%20controlado-64748b"> <img alt="Web" src="https://img.shields.io/badge/plataforma-web-2563eb"></p>
-  <p><a href="RELEASE_V1.md"><strong>Relatório do beta</strong></a> · <a href="VALIDACAO_BETA.md"><strong>Validação</strong></a> · <a href="FULLSTACK.md"><strong>Arquitetura</strong></a></p>
+  <p><strong>Agenda online para profissionais e pequenos negócios, com reservas e horários organizados.</strong></p>
+  <p><img alt="Beta controlado" src="https://img.shields.io/badge/status-beta%20controlado-64748b"> <img alt="Web" src="https://img.shields.io/badge/plataforma-web-2563eb"></p>
+  <p><a href="RELEASE_V1.md"><strong>Relatório 1.0</strong></a> · <a href="VALIDACAO_BETA.md"><strong>Validação</strong></a> · <a href="FULLSTACK.md"><strong>Arquitetura</strong></a></p>
 </div>
 
-## Para quem é
+---
 
-Um produto de agenda voltado a **profissionais e pequenos estabelecimentos** que precisam organizar serviços, horários, reservas, folgas e atendimento. O proprietário tem seu painel; o cliente acessa o fluxo público para reservar.
+## Do agendamento à confirmação
 
-| Área | Exemplos |
+O **AgendaLeve** organiza a rotina de atendimento: o estabelecimento configura seus serviços e horários, compartilha sua página de reservas e acompanha o calendário em um painel próprio. A primeira versão está **tecnicamente concluída para beta controlado**, mas o uso comercial amplo depende de homologação e integrações externas.
+
+```text
+Negócio cria serviços e define disponibilidade
+                       ↓
+            Compartilha o link público
+                       ↓
+       Cliente escolhe serviço, data e horário
+                       ↓
+        Reserva registrada e acompanhada
+                       ↓
+  Confirmação · Reagendamento · Cancelamento
+```
+
+## Funcionalidades
+
+| Quem utiliza | Recursos principais |
 | --- | --- |
-| **Negócio** | Expediente, serviços, bloqueios, reservas e relatórios |
-| **Cliente** | Escolha de serviço e horário, confirmação e reagendamento |
-| **Operação** | Filtros, exportação CSV/ICS, status e lembretes |
-| **Acesso** | Modo local para experimentar; Supabase Auth para dados persistidos |
+| **Negócio** | Cadastro de serviços, expediente, folgas, bloqueios e identidade da página |
+| **Cliente** | Reserva pelo link público, resumo de preço e duração, reagendamento e cancelamento por link privado |
+| **Gestão** | Agenda com filtros e busca, mudanças de status, faltas e conclusão |
+| **Relatórios** | Resumo operacional dos últimos 30 dias e exportação CSV |
+| **Calendário** | Exportação `.ics` de reservas confirmadas |
+| **Conta** | Modo local para demonstração e autenticação Supabase para persistência remota |
+| **Interface** | Português e inglês, PWA e experiência responsiva |
 
-**Estado:** versão 1.0 documentada como **tecnicamente concluída**, destinada a **beta controlado**. Publicação e testes automatizados não substituem homologação de usuários, permissões e integrações externas.
+Os horários reais dependem de disponibilidade, configurações da loja e integridade do backend. Teste permissões antes de permitir acesso a dados de clientes.
 
-## Abrir e desenvolver
+## Executar localmente
 
-Este repositório usa frontend web estático e integração Supabase quando configurada. Para ver a interface localmente:
+**Pré-requisitos:** Python 3 (ou outro servidor HTTP estático) e navegador moderno.
 
 ```bash
 git clone https://github.com/HelioConde/agendaleve.git
@@ -28,120 +47,36 @@ cd agendaleve
 python -m http.server 8000
 ```
 
-Abra `http://localhost:8000`. Para validar testes de navegador, use `npm install` e `npm run test:e2e` após instalar os navegadores Playwright.
+Abra `http://localhost:8000`. O modo de demonstração pode funcionar sem conta; as operações remotas exigem um projeto Supabase preparado conforme [SUPABASE_SETUP.md](SUPABASE_SETUP.md).
 
-**Dados:** o ambiente Supabase, suas políticas RLS e funções precisam ser configurados conforme [SUPABASE_SETUP.md](SUPABASE_SETUP.md). Evite dados de clientes reais em uma demo não homologada.
+Para os testes de navegador declarados no `package.json`:
+
+```bash
+npm install
+npx playwright install
+npm run test:e2e
+```
+
+Também há `npm run screenshots` para capturas. **Estes comandos não foram executados nesta atualização do README.**
+
+## Arquitetura e dados
+
+O frontend é uma aplicação web estática com integração ao **Supabase Auth, banco de dados e Edge Functions**. As reservas, dados de contato e recursos privados devem ser isolados por **RLS e verificações no servidor**, nunca apenas por filtros no JavaScript do navegador.
+
+O projeto contém fluxos de calendário e página pública do negócio, com sincronização opcional. Recursos de push, permissões e notificações exigem configuração real e consentimento adequado.
+
+## Status e próximos passos
+
+**v1.0 — desenvolvimento principal concluído; beta controlado.** O histórico técnico relata verificações de CI, PWA, backend e fluxos críticos nas datas originais. Isso **não substitui** confirmar os testes e as integrações no momento de implantação.
+
+- [Relatório da versão](RELEASE_V1.md)
+- [Checklist de validação humana](VALIDACAO_BETA.md)
+- [Arquitetura e integração](FULLSTACK.md)
+- [Documentação histórica completa](docs/README_HISTORY_2026-10-27.md)
+- [Pendências de homologação](https://github.com/HelioConde/agendaleve/issues/1)
+
+**Próxima prioridade:** validar a jornada com negócios e clientes reais usando dados de teste controlados, revisar disponibilidade, proteção de contatos e regras de cancelamento.
 
 ---
 
-## Status de desenvolvimento
-
-**AgendaLeve 1.0: desenvolvimento principal concluído e site publicado.** O produto está liberado para **beta controlado**, com homologação humana e integrações externas ainda pendentes. Consulte o [relatório de encerramento técnico 1.0](RELEASE_V1.md), que inclui evidências de CI, verificação RLS, segurança do PWA e checklist de validação real.
-
-- CI crítico: Static QA, Browser E2E e GitHub Pages aprovados.
-- Backend principal e Edge Functions publicados no Supabase.
-- PT-BR/EN, anúncios preparados, PWA, push, branding, relatórios, calendário e bloqueios/folgas concluídos.
-- Pendências externas/manuais foram movidas para a [issue #1 — Validação humana e configuração externa](https://github.com/HelioConde/agendaleve/issues/1).
-- Novas features P2 ficam pausadas até surgir feedback real, bug crítico ou requisito de segurança.
-
-## Estado atual
-
-- modo local sem conta;
-- Supabase Auth;
-- negócio, expediente por dia da semana, serviços e reservas persistidos no `pizzaria-db`;
-- link público por `?negocio=slug`;
-- branding da página pública por cor personalizada, com preview no painel;
-- experiência separada entre painel do negócio e página do cliente;
-- resumo vivo da reserva com serviço, duração, preço, data e horário;
-- disponibilidade em tempo real;
-- telefone/WhatsApp privado por reserva para retorno do estabelecimento;
-- filtros da agenda por período e status;
-- busca da agenda por cliente, telefone ou serviço;
-- exportação da agenda em CSV;
-- exportação de reserva confirmada para calendário em arquivo `.ics`;
-- relatório operacional dos últimos 30 dias com comparecimento, faltas, cancelamentos e receita estimada;
-- ações rápidas para confirmar, concluir, marcar não comparecimento e cancelar atendimentos;
-- edição de serviços existentes sem precisar recriar;
-- cancelamento seguro pelo cliente através de link privado com token;
-- reagendamento pelo próprio cliente, sem login e sem expor dados privados;
-- consulta de disponibilidade que desconsidera a própria reserva durante o reagendamento;
-- Edge Function `booking-availability` sem exposição de dados privados;
-- Edge Function `create-booking` com validação, rate limit, token de cancelamento e prevenção de conflitos;
-- Edge Function `cancel-booking` para cancelamento sem login, validado por token;
-- Edge Functions `booking-manage` e `reschedule-booking` para gestão segura da reserva pelo cliente;
-- RLS separando proprietário, visitante público e reservas privadas;
-- GitHub Pages + CI;
-- lembretes automáticos por Web Push (24h/2h) com cron do Supabase;
-- preferências e subscriptions push protegidas por RLS;
-- instrumentação beta sem PII e feedback 1–5;
-- integração Turnstile pronta para ativação com credenciais reais;
-- SEO básico.
-
-## Idiomas
-
-- **PT-BR** é o idioma principal, padrão e fallback.
-- **English (EN)** está disponível pelo seletor no topo.
-- A preferência fica salva no navegador.
-- Fluxos principais, mensagens, estados dinâmicos, datas e valores acompanham o idioma ativo.
-- Conteúdo cadastrado pelo usuário, como nomes de clientes, serviços e negócios, não é traduzido automaticamente.
-
-## Backend
-
-Tabelas:
-- `agendaleve_businesses` (inclui `brand_color` para personalização da página pública)
-- `agendaleve_business_hours`
-- `agendaleve_time_off`
-- `agendaleve_services`
-- `agendaleve_bookings`
-- `agendaleve_booking_rate_limits`
-- `product_subscriptions`
-
-As migrations e Edge Functions ficam em `supabase/`. Consulte também `SUPABASE_SETUP.md` e `FULLSTACK.md`.
-
-
-## Design system
-
-A identidade visual usa uma paleta de alto contraste e baixa saturação:
-
-- verde floresta `#1F6A4A` para marca e ações principais;
-- verde profundo `#164B36` / `#103C2A` para títulos e estados fortes;
-- fundo neutro `#F5F6F2` para reduzir fadiga visual;
-- sálvia `#E7F0EA` para superfícies secundárias;
-- areia `#F1ECE2` como contraste quente discreto;
-- âmbar `#B5792A` apenas para pequenos sinais de atenção/status.
-
-O painel e a página pública compartilham os mesmos tokens, mas a página de reserva usa contraste mais suave para manter foco no formulário.
-
-
-## Roadmap
-
-A lista priorizada de melhorias e o estado de implementação ficam em [MELHORIAS.md](./MELHORIAS.md).
-
-
-## QA
-
-O repositório possui duas camadas automáticas:
-
-- **Static QA:** sintaxe JavaScript, arquivos obrigatórios, integrações e marcadores críticos;
-- **Browser E2E:** Playwright + Chromium cobrindo configuração do negócio, expediente por dia, criação/edição de serviço, reserva local e consulta na agenda.
-
-Execute localmente com `npm install` e `npm run test:e2e`.
-
-
-## Push e lembretes
-
-O proprietário pode ativar Web Push explicitamente no navegador e escolher lembretes de 24 horas e/ou 2 horas antes. O despacho roda a cada 5 minutos via `pg_cron` + `pg_net` e a Edge Function `reminder-dispatch`. As notificações respeitam o idioma salvo na conta (PT-BR ou EN). As chaves privadas VAPID e o segredo do cron ficam no Supabase Vault, nunca no frontend.
-
-## Validação beta
-
-Consulte [VALIDACAO_BETA.md](./VALIDACAO_BETA.md). O produto já coleta eventos de funil e feedback sem PII, mas validação real só será considerada concluída depois da rodada com pessoas reais.
-
-
-## PWA e operação beta
-
-O AgendaLeve é instalável como PWA quando o navegador oferece o prompt. O service worker mantém o shell básico disponível e também recebe notificações push. Proprietários autenticados podem enviar uma notificação de teste e acompanhar, no painel beta, reservas iniciadas, concluídas, conversão e nota média dos últimos 30 dias.
-
-
-## Monetização por anúncios
-
-O modelo de planos/preços foi removido. O AgendaLeve está preparado para permanecer gratuito e usar anúncios responsivos em posições não críticas. A integração fica desativada até existirem Publisher ID e slots reais; consulte [ADS_SETUP.md](./ADS_SETUP.md).
+<div align="center"><strong>Desenvolvido por <a href="https://github.com/HelioConde">Hélio Conde</a></strong></div>
